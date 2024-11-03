@@ -73,6 +73,16 @@ const model = ref([
                 label: 'Empty',
                 icon: 'pi pi-fw pi-circle-off',
                 to: '/pages/empty'
+            },
+            {
+                label: 'My Info',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/persondata'
+            },
+            {
+                label: 'Job History',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/jobhistory'
             }
         ]
     },

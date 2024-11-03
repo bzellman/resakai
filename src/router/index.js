@@ -100,6 +100,16 @@ const router = createRouter({
                     component: () => import('@/views/pages/Crud.vue')
                 },
                 {
+                    path: '/pages/persondata',
+                    name: 'persondata',
+                    component: () => import('@/views/pages/PersonData.vue')
+                },
+                {
+                    path: '/pages/jobhistory',
+                    name: 'jobhistory',
+                    component: () => import('@/views/pages/JobHistory.vue')
+                },
+                {
                     path: '/documentation',
                     name: 'documentation',
                     component: () => import('@/views/pages/Documentation.vue')
@@ -116,7 +126,6 @@ const router = createRouter({
             name: 'notfound',
             component: () => import('@/views/pages/NotFound.vue')
         },
-
         {
             path: '/auth/login',
             name: 'login',
