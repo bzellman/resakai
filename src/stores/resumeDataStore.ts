@@ -1,7 +1,7 @@
 import { useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import { BaseEntity, Certification, Job, Person, ProfessionalSummary, Project, SkillName, SkillType, Volunteer } from '../types/interfaceTypes';
+import { BaseEntity, Certification, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, Volunteer } from '../types/interfaceTypes';
 
 function createStore<T extends BaseEntity>(storeName: string) {
     return defineStore(storeName, {
@@ -52,13 +52,12 @@ function createStore<T extends BaseEntity>(storeName: string) {
             createId(): string {
                 return uuidv4();
             }
-        },
-
-        persist: true // Enable Pinia persistence
+        }
     });
 }
 
 export const useJobsStore = createStore<Job>('jobs');
+export const useJobDescriptionsStore = createStore<JobDescription>('jobDescriptions');
 export const usePersonsStore = createStore<Person>('persons');
 export const useSummaryStore = createStore<ProfessionalSummary>('professionalSummaries');
 export const useSkillsStore = createStore<SkillType>('skillTypes');

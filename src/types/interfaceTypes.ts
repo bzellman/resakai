@@ -22,10 +22,12 @@ export interface Job extends BaseEntity {
     startDate: Date;
     endDate?: Date;
     location: string;
+    descriptions: { description: string; tags: string[]; id: string; checked: boolean }[];
 }
 
 export interface JobDescription extends BaseEntity {
     description: string;
+    jobId: string;
     checked: boolean;
 }
 
