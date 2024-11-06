@@ -19,8 +19,7 @@ const job = ref({
     company_name: '',
     start_date: null,
     end_date: null,
-    location: '',
-    tags: [] // Add tags to job
+    location: ''
 });
 const selectedJobs = ref([]);
 const filters = ref({
@@ -33,7 +32,6 @@ const noData = ref(false);
 // State for job description items
 const jobDescriptionItems = ref({});
 const newDescriptions = ref({}); // State for new descriptions for each job
-const newTags = ref({}); // State for new tags for each job description
 const expandedRows = ref([]); // State for expanded rows
 
 // Initialize jobs array if needed
@@ -54,14 +52,12 @@ onMounted(async () => {
 // Function to add job description item
 function addJobDescriptionItem(jobId) {
     const description = newDescriptions.value[jobId];
-    const tags = newTags.value[jobId] || [];
     if (!jobDescriptionItems.value[jobId]) {
         jobDescriptionItems.value[jobId] = [];
     }
-    jobDescriptionItems.value[jobId].push({ description, tags, id: createId(), checked: false });
+    jobDescriptionItems.value[jobId].push({ description, id: createId(), checked: false });
     jobsStore.updateJobDescriptions(jobId, jobDescriptionItems.value[jobId]);
     newDescriptions.value[jobId] = ''; // Clear input field
-    newTags.value[jobId] = []; // Clear tags field
 }
 
 // Function to delete job description item
@@ -115,8 +111,7 @@ function resetForm() {
         company_name: '',
         start_date: null,
         end_date: null,
-        location: '',
-        tags: [] // Reset tags
+        location: ''
     };
     jobDialog.value = false;
     submitted.value = false;
@@ -166,10 +161,6 @@ function resetForm() {
                                             <label for="location">Location</label>
                                             <InputText id="location" v-model="job.location" type="text" />
                                         </div>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 w-full md:w-full">
-                                        <label for="tags">Tags</label>
-                                        <InputText id="tags" v-model="job.tags" type="text" placeholder="Comma separated tags" />
                                     </div>
                                     <Button label="Add Job" icon="pi pi-upload" severity="secondary" @click="saveJob" />
                                 </div>
@@ -247,7 +238,6 @@ function resetForm() {
                             <!-- Input for adding new job description item -->
                             <div class="flex items-center gap-2 mt-2 w-full">
                                 <InputText v-model="newDescriptions[slotProps.data.id]" placeholder="Add description" class="flex-grow" />
-                                <InputText v-model="newTags[slotProps.data.id]" placeholder="Comma separated tags" class="flex-grow" />
                                 <Button label="Add" icon="pi pi-plus" @click="addJobDescriptionItem(slotProps.data.id)" />
                             </div>
                         </div>
