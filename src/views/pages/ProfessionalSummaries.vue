@@ -1,27 +1,35 @@
-<script setup>
-import { useSummaryStore } from '@/stores/resumeDataStore';
+<script setup lang="ts">
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import { useSummaryStore } from '../../stores/resumeDataStore';
+import { ProfessionalSummary } from '../../types/interfaceTypes';
 
 const summaryStore = useSummaryStore();
 const toast = useToast();
 const summaryDialog = ref(false);
-const summary = ref({
+const filters = ref<{ global: { value: string } }>({ global: { value: '' } });
+const summary = ref<ProfessionalSummary>({
     id: '',
-    createdDate: new Date().toISOString(),
+    createDate: new Date(),
     included: false,
     tags: [],
     summary: ''
 });
 const submitted = ref(false);
+const tagsString = computed({
+    get: () => summary.value.tags.join(', '),
+    set: (value: string) => {
+        summary.value.tags = value.split(',').map((tag) => tag.trim());
+    }
+});
 
 // Safe computed property with fallback
 const tableData = computed(() => {
-    return Array.isArray(summaryStore.professionalSummaries) ? [...summaryStore.professionalSummaries] : [];
+    return Array.isArray(summaryStore.items) ? [...summaryStore.items] : [];
 });
 
 onMounted(async () => {
-    await summaryStore.loadProfessionalSummaries();
+    await summaryStore.loadItems();
 });
 
 function saveSummary() {
@@ -29,18 +37,18 @@ function saveSummary() {
 
     if (summary.value?.summary?.trim()) {
         if (summary.value.id) {
-            summaryStore.updateProfessionalSummary(summary.value);
+            summaryStore.updateItem(summary.value);
             toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Updated', life: 3000 });
         } else {
             summary.value.id = createId();
-            summaryStore.addProfessionalSummary(summary.value);
+            summaryStore.addItem(summary.value);
             toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Created', life: 3000 });
         }
 
         summaryDialog.value = false;
         summary.value = {
             id: '',
-            createdDate: new Date().toISOString(),
+            createDate: new Date(),
             included: false,
             tags: [],
             summary: ''
@@ -48,23 +56,18 @@ function saveSummary() {
     }
 }
 
-function deleteSummary(summaryId) {
-    summaryStore.deleteProfessionalSummary(summaryId);
+function deleteSummary(summaryId: string) {
+    summaryStore.deleteItem(summaryId);
     toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Deleted', life: 3000 });
 }
 
-function createId() {
+function createId(): string {
     let id = '';
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (let i = 0; i < 5; i++) {
         id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return id;
-}
-
-function editSummary(summaryData) {
-    summary.value = { ...summaryData };
-    summaryDialog.value = true;
 }
 </script>
 
@@ -81,22 +84,20 @@ function editSummary(summaryData) {
                                     <div class="flex flex-col md:flex-row gap-4">
                                         <div class="flex flex-wrap gap-2 w-full md:w-full">
                                             <label for="summary">Summary</label>
-                                            <Textarea id="summary" v-model="summary.summary" rows="10" cols="30" />
+                                            <!-- <InputText id="tags" v-model="tagsString" @input="updateTags" type="text" placeholder="Comma separated tags" /> -->
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:flex-row gap-4">
                                         <div class="flex flex-wrap gap-2 w-full md:w-full">
                                             <label for="tags">Tags</label>
-                                            <InputText id="tags" v-model="summary.tags" type="text" placeholder="Comma separated tags" />
+                                            <!-- <InputText id="tags" v-model="summary.tags" type="text" placeholder="Comma separated tags" /> -->
                                         </div>
                                     </div>
-                                    <div class="flex flex-col md:flex-row gap-4">
-                                        <div class="flex flex-wrap gap-2 w-full md:w-full">
-                                            <label for="included">Included</label>
-                                            <Checkbox id="included" v-model="summary.included" />
-                                        </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label for="included" class="mr-2">Include in Resume</label>
+                                        <Checkbox id="included" v-model="summary.included" :binary="true" />
                                     </div>
-                                    <Button label="Save" icon="pi pi-save" severity="secondary" @click="saveSummary" />
+                                    <Button label="Save Summary" icon="pi pi-save" @click="saveSummary" />
                                 </div>
                             </div>
                         </AccordionContent>
@@ -107,7 +108,7 @@ function editSummary(summaryData) {
             <div v-if="summaryStore.loading" class="flex justify-center items-center">
                 <p>Loading...</p>
             </div>
-            <div v-else-if="summaryStore.professionalSummaries.length === 0" class="flex flex-col items-center">
+            <div v-else-if="summaryStore.items.length === 0" class="flex flex-col items-center">
                 <p>No professional summaries available. Please add a new summary.</p>
             </div>
             <div v-else>
@@ -115,12 +116,10 @@ function editSummary(summaryData) {
                     <template #header>
                         <div class="flex flex-wrap gap-2 items-center justify-between">
                             <h4 class="m-0">Professional Summaries</h4>
-                            <IconField>
-                                <InputIcon>
-                                    <i class="pi pi-search" />
-                                </InputIcon>
-                                <!-- <InputText v-model="filters['global'].value" placeholder="Search..." /> -->
-                            </IconField>
+                            <span class="p-input-icon-left">
+                                <i class="pi pi-search" />
+                                <InputText v-model="filters['global'].value" placeholder="Search..." />
+                            </span>
                         </div>
                     </template>
 
@@ -133,7 +132,7 @@ function editSummary(summaryData) {
                     </Column>
                     <Column header="Actions" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editSummary(slotProps.data)" />
+                            <!-- <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editSummary(slotProps.data)" /> -->
                             <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteSummary(slotProps.data.id)" />
                         </template>
                     </Column>

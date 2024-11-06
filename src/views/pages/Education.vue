@@ -1,8 +1,8 @@
-<script setup>
-import { useJobsStore } from '@/stores/resumeDataStore';
+<script setup lang="ts">
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import { useJobsStore } from '@/stores/resumeDataStore';
 
 const jobsStore = useJobsStore();
 const toast = useToast();
