@@ -11,6 +11,7 @@ declare module 'vue' {
     AccordionContent: typeof import('primevue/accordioncontent')['default']
     AccordionHeader: typeof import('primevue/accordionheader')['default']
     AccordionPanel: typeof import('primevue/accordionpanel')['default']
+    AutoComplete: typeof import('primevue/autocomplete')['default']
     Button: typeof import('primevue/button')['default']
     Checkbox: typeof import('primevue/checkbox')['default']
     Column: typeof import('primevue/column')['default']
@@ -24,6 +25,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Tag: typeof import('primevue/tag')['default']
     Textarea: typeof import('primevue/textarea')['default']
     Toast: typeof import('primevue/toast')['default']
   }

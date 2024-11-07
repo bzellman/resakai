@@ -1,7 +1,14 @@
-export interface BaseEntity {
+export interface EntityBase {
     id: string;
+}
+
+export interface TagEntity extends EntityBase {
+    tagName: string;
+}
+
+export interface BaseEntity extends EntityBase {
     createDate: Date;
-    tags: string[];
+    tags: TagEntity[];
     included: boolean;
 }
 
@@ -19,10 +26,10 @@ export interface Person extends BaseEntity {
 export interface Job extends BaseEntity {
     jobTitle: string;
     companyName: string;
-    startDate: Date;
+    startDate?: Date;
     endDate?: Date;
     location: string;
-    descriptions: { description: string; tags: string[]; id: string; checked: boolean }[];
+    descriptions: { description: string; tags: TagEntity[]; id: string; checked: boolean }[];
 }
 
 export interface JobDescription extends BaseEntity {

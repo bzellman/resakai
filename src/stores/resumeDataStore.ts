@@ -1,9 +1,9 @@
 import { useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import { BaseEntity, Certification, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, Volunteer } from '../types/interfaceTypes';
+import { Certification, EntityBase, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
 
-function createStore<T extends BaseEntity>(storeName: string) {
+function createStore<T extends EntityBase>(storeName: string) {
     return defineStore(storeName, {
         state: () => ({
             items: useStorage<T[]>(storeName, []),
@@ -17,7 +17,22 @@ function createStore<T extends BaseEntity>(storeName: string) {
                 try {
                     const savedItems = localStorage.getItem(storeName);
                     if (savedItems) {
-                        this.items = JSON.parse(savedItems);
+                        const parsedItems = JSON.parse(savedItems) as T[];
+
+                        this.items = parsedItems.map((item) => ({
+                            ...item,
+                            ...(item.hasOwnProperty('createDate') && {
+                                createDate: new Date((item as any).createDate)
+                            }),
+                            ...(item.hasOwnProperty('tags') && {
+                                tags: item.tags.map((tag: TagEntity) => ({
+                                    ...tag
+                                    // If TagEntity has properties needing reconstruction, handle them here
+                                }))
+                            })
+                        }));
+                    } else {
+                        this.items = [];
                     }
                 } catch (error) {
                     console.error(`Failed to load ${storeName}:`, error);
@@ -46,7 +61,19 @@ function createStore<T extends BaseEntity>(storeName: string) {
             },
 
             saveToStorage() {
-                localStorage.setItem(storeName, JSON.stringify(this.items));
+                const itemsToStore = this.items.map((item) => ({
+                    ...item,
+                    ...(item.hasOwnProperty('createDate') && {
+                        createDate: (item as any).createDate.toISOString()
+                    }),
+                    ...(item.hasOwnProperty('tags') && {
+                        tags: item.tags.map((tag: TagEntity) => ({
+                            ...tag
+                            // Include other properties of TagEntity as needed
+                        }))
+                    })
+                }));
+                localStorage.setItem(storeName, JSON.stringify(itemsToStore));
             },
 
             createId(): string {
@@ -56,6 +83,7 @@ function createStore<T extends BaseEntity>(storeName: string) {
     });
 }
 
+// Existing stores
 export const useJobsStore = createStore<Job>('jobs');
 export const useJobDescriptionsStore = createStore<JobDescription>('jobDescriptions');
 export const usePersonsStore = createStore<Person>('persons');
@@ -65,3 +93,4 @@ export const useSkillNamesStore = createStore<SkillName>('skillNames');
 export const useVolunteerStore = createStore<Volunteer>('volunteers');
 export const useProjectsStore = createStore<Project>('projects');
 export const useCertificationsStore = createStore<Certification>('certifications');
+export const useTagsStore = createStore<TagEntity>('tags');
