@@ -24,8 +24,8 @@ function createStore<T extends EntityBase>(storeName: string) {
                             ...(item.hasOwnProperty('createDate') && {
                                 createDate: new Date((item as any).createDate)
                             }),
-                            ...(item.hasOwnProperty('tags') && {
-                                tags: item.tags.map((tag: TagEntity) => ({
+                            ...('tags' in item && {
+                                tags: (item as any).tags.map((tag: TagEntity) => ({
                                     ...tag
                                     // If TagEntity has properties needing reconstruction, handle them here
                                 }))
@@ -50,7 +50,8 @@ function createStore<T extends EntityBase>(storeName: string) {
             updateItem(updatedItem: T) {
                 const index = this.items.findIndex((item) => item.id === updatedItem.id);
                 if (index !== -1) {
-                    this.items[index] = updatedItem;
+                    // Update the existing item properties
+                    Object.assign(this.items[index], updatedItem);
                     this.saveToStorage();
                 }
             },
