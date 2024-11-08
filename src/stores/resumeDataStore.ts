@@ -1,7 +1,7 @@
 import { useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import { Certification, EntityBase, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
+import { Certification, Education, EntityBase, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
 
 function createStore<T extends EntityBase>(storeName: string) {
     return defineStore(storeName, {
@@ -89,9 +89,10 @@ export const useJobsStore = createStore<Job>('jobs');
 export const useJobDescriptionsStore = createStore<JobDescription>('jobDescriptions');
 export const usePersonsStore = createStore<Person>('persons');
 export const useSummaryStore = createStore<ProfessionalSummary>('professionalSummaries');
-export const useSkillsStore = createStore<SkillType>('skillTypes');
-export const useSkillNamesStore = createStore<SkillName>('skillNames');
+export const useSkillTypesStore = createStore<SkillType>('skillTypes');
+export const useSkillsStore = createStore<SkillName>('skillNames');
 export const useVolunteerStore = createStore<Volunteer>('volunteers');
 export const useProjectsStore = createStore<Project>('projects');
 export const useCertificationsStore = createStore<Certification>('certifications');
 export const useTagsStore = createStore<TagEntity>('tags');
+export const useEducationStore = createStore<Education>('education');

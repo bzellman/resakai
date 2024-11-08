@@ -35,7 +35,7 @@ onMounted(async () => {
 
 function searchTags(event: { query: string }) {
     const query = event.query.toLowerCase();
-    filteredTags.value = tagsStore.items.map((tag) => tag.tagName).filter((tagName) => tagName.toLowerCase().includes(query));
+    filteredTags.value = tagsStore.items.map((tag) => tag.tagName).filter((tagName) => tagName && tagName.toLowerCase().includes(query));
 }
 
 function handleTagInput(event: KeyboardEvent) {

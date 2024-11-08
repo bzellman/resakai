@@ -23,6 +23,31 @@ const model = ref([
                 label: 'Job History',
                 icon: 'pi pi-fw pi-circle-off',
                 to: '/pages/jobhistory'
+            },
+            {
+                label: 'Skills',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/skilldetails'
+            },
+            {
+                label: 'Certifications',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/certificationsdetails'
+            },
+            {
+                label: 'Education',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/educationdetails'
+            },
+            {
+                label: 'Projects',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/projectdetails'
+            },
+            {
+                label: 'Volunteer',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/volunteerdetails'
             }
         ]
     }

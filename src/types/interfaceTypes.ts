@@ -67,3 +67,11 @@ export interface Certification extends BaseEntity {
     certName: string;
     details: string;
 }
+
+export interface Education extends BaseEntity {
+    schoolName: string;
+    degreeName: string;
+    startDate: Date;
+    endDate: Date;
+    location: string;
+}
