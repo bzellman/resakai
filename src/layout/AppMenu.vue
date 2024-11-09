@@ -45,9 +45,9 @@ const model = ref([
                 to: '/pages/projectdetails'
             },
             {
-                label: 'Volunteer',
+                label: 'Resume Details',
                 icon: 'pi pi-fw pi-circle-off',
-                to: '/pages/volunteerdetails'
+                to: '/pages/resumedetails'
             }
         ]
     }

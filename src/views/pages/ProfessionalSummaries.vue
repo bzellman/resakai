@@ -1,96 +1,87 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { onMounted, ref } from 'vue';
-import { useSummaryStore, useTagsStore } from '../../stores/resumeDataStore';
+import AutoComplete from 'primevue/autocomplete';
+import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
+import DataTable from 'primevue/datatable';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import Column from 'primevue/column';
+import Tag from 'primevue/tag';
+
+import { useSummaryStore } from '../../stores/resumeDataStore';
+import { useEntity } from '../composables/useEntity';
 import { ProfessionalSummary, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
 const summaryStore = useSummaryStore();
-const tagsStore = useTagsStore();
 const toast = useToast();
 
-// State variables
-const summaryDialog = ref(false);
-const summary = ref<ProfessionalSummary>({
-    id: '',
-    createDate: new Date(),
-    included: false,
-    tags: [],
-    summary: ''
-});
-const submitted = ref(false);
+// Use the useEntity composable
+const {
+    entityDialog: summaryDialog,
+    entity: summary,
+    submitted,
+    includedEntities: includedSummaries,
+    filters,
+    filteredTags,
+    selectedTags,
+    searchTags,
+    handleTagInput,
+    saveEntity,
+    editEntity,
+    deleteEntity,
+    toggleIncludeEntity
+} = useEntity(summaryStore);
 
-// For tag suggestions and selection
-const filteredTags = ref<string[]>([]);
-const selectedTags = ref<string[]>([]);
-
-onMounted(async () => {
-    await summaryStore.loadItems();
-    await tagsStore.loadItems();
-    // Initialize selectedTags when editing
-    if (summary.value.tags.length > 0) {
-        selectedTags.value = summary.value.tags.map((tag) => tag.tagName);
-    }
-});
-
-function searchTags(event: { query: string }) {
-    const query = event.query.toLowerCase();
-    filteredTags.value = tagsStore.items.map((tag) => tag.tagName).filter((tagName) => tagName && tagName.toLowerCase().includes(query));
-}
-
-function handleTagInput(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-        const input = (event.target as HTMLInputElement).value.trim();
-        if (input && !filteredTags.value.includes(input.toLowerCase())) {
-            selectedTags.value.push(input);
-            (event.target as HTMLInputElement).value = ''; // Clear the input field
-        }
-    }
-}
-
-function saveSummary() {
-    submitted.value = true;
-
+// Alias methods for clarity
+const saveSummary = () => {
     if (summary.value.summary.trim()) {
-        // Handle tags
-        summary.value.tags = selectedTags.value.map((tagName) => {
-            const existingTag = tagsStore.items.find((tag) => tag.tagName.toLowerCase() === tagName.toLowerCase());
-            if (existingTag) {
-                return existingTag;
-            } else {
-                const newTag: TagEntity = {
-                    id: tagsStore.createId(),
-                    tagName
-                };
-                tagsStore.addItem(newTag);
-                return newTag;
-            }
+        saveEntity();
+
+        // Show toast notification
+        toast.add({
+            severity: 'success',
+            summary: 'Successful',
+            detail: summary.value.id ? 'Summary Updated' : 'Summary Created',
+            life: 3000
         });
 
-        if (summary.value.id) {
-            summaryStore.updateItem(summary.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Updated', life: 3000 });
-        } else {
-            summary.value.id = summaryStore.createId();
-            summaryStore.addItem(summary.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Created', life: 3000 });
-        }
-
+        // Reset form
         resetForm();
+    } else {
+        // Handle validation errors
+        toast.add({
+            severity: 'error',
+            summary: 'Validation Error',
+            detail: 'Please fill in all required fields.',
+            life: 3000
+        });
     }
-}
+};
 
-function editSummary(summaryToEdit: ProfessionalSummary) {
-    summary.value = { ...summaryToEdit };
-    selectedTags.value = summaryToEdit.tags.map((tag) => tag.tagName);
-    summaryDialog.value = true;
-}
+const editSummary = (item: ProfessionalSummary) => {
+    editEntity(item);
+};
 
-function deleteSummary(summaryId: string) {
-    summaryStore.deleteItem(summaryId);
-    toast.add({ severity: 'success', summary: 'Successful', detail: 'Summary Deleted', life: 3000 });
-}
+const deleteSummary = (id: string) => {
+    deleteEntity(id);
 
+    // Show toast notification
+    toast.add({
+        severity: 'success',
+        summary: 'Successful',
+        detail: 'Summary Deleted',
+        life: 3000
+    });
+};
+
+const toggleIncludeSummary = (id: string) => {
+    toggleIncludeEntity(id);
+};
+
+// Reset form
 function resetForm() {
     summary.value = {
         id: '',
@@ -102,6 +93,15 @@ function resetForm() {
     selectedTags.value = [];
     submitted.value = false;
 }
+
+// Load initial data
+onMounted(async () => {
+    await summaryStore.loadItems();
+    // Initialize selectedTags when editing
+    if (summary.value.tags && summary.value.tags.length > 0) {
+        selectedTags.value = summary.value.tags.map((tag: TagEntity) => tag.tagName);
+    }
+});
 </script>
 
 <template>
@@ -168,7 +168,9 @@ function resetForm() {
                     </Column>
                     <Column field="included" header="Included" sortable style="min-width: 12rem">
                         <template #body="slotProps">
-                            <Checkbox v-model="slotProps.data.included" disabled />
+                            <Checkbox id="included" v-model="slotProps.data.included" :binary="true" />
+
+                            <!-- <Checkbox v-model="slotProps.data.included" disabled /> -->
                         </template>
                     </Column>
                     <!-- Actions column -->

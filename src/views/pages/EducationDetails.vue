@@ -7,116 +7,34 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
+import Column from 'primevue/column';
+import Tag from 'primevue/tag';
 
 import { useEducationStore, useTagsStore } from '../../stores/resumeDataStore';
-import { Education } from '../../types/interfaceTypes';
+import { useEntity } from '../composables/useEntity';
+import { Education, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
 const educationStore = useEducationStore();
 const tagsStore = useTagsStore();
 const toast = useToast();
 
-// State variables
-const educationDialog = ref(false);
-const education = ref<Education>({
-    id: '',
-    createDate: new Date(),
-    included: false,
-    tags: [],
-    schoolName: '',
-    degreeName: '',
-    startDate: new Date(),
-    endDate: new Date(),
-    location: ''
-});
-const submitted = ref(false);
-
-// For tag suggestions and selection
-const filteredTags = ref<string[]>([]);
-const selectedTags = ref<string[]>([]);
-
-// For included education entries
-const includedEducation = ref<string[]>([]);
-
-// Filters for DataTable
-const filters = ref({
-    global: { value: '' }
-});
-
-onMounted(async () => {
-    await Promise.all([educationStore.loadItems(), tagsStore.loadItems()]);
-
-    // Initialize selectedTags when editing
-    if (education.value.tags.length > 0) {
-        selectedTags.value = education.value.tags.map((tag) => tag.tagName);
-    }
-
-    // Initialize includedEducation
-    includedEducation.value = educationStore.items.filter((edu) => edu.included).map((edu) => edu.id);
-});
-
-// Function to search and filter tags
-function searchTags(event: { query: string }) {
-    const query = event.query.toLowerCase();
-    filteredTags.value = tagsStore.items.map((tag) => tag.tagName).filter((tagName) => tagName && tagName.toLowerCase().includes(query));
-}
-
-// Function to handle tag input
-function handleTagInput(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-        const input = (event.target as HTMLInputElement).value.trim();
-        if (input && !selectedTags.value.includes(input)) {
-            selectedTags.value.push(input);
-            (event.target as HTMLInputElement).value = ''; // Clear the input field
-        }
-    }
-}
-
-// Function to toggle included property
-function toggleIncludeEducation(eduId: string) {
-    const eduItem = educationStore.items.find((edu) => edu.id === eduId);
-    if (eduItem) {
-        eduItem.included = !eduItem.included;
-        educationStore.updateItem(eduItem);
-        if (eduItem.included) {
-            includedEducation.value.push(eduId);
-        } else {
-            const index = includedEducation.value.indexOf(eduId);
-            if (index !== -1) {
-                includedEducation.value.splice(index, 1);
-            }
-        }
-    }
-}
-
-// Save skill
-function saveEducation() {
-    submitted.value = true;
-    if (education.value.schoolName.trim() && education.value.degreeName.trim()) {
-        // Handle tags
-        education.value.tags = selectedTags.value.map((tagName) => {
-            let tag = tagsStore.items.find((t) => t.tagName === tagName);
-            if (!tag) {
-                tag = { id: tagsStore.createId(), tagName };
-                tagsStore.addItem(tag);
-            }
-            return tag;
-        });
-
-        // Save or update education
-        if (education.value.id) {
-            educationStore.updateItem(education.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Education Updated', life: 3000 });
-        } else {
-            education.value.id = educationStore.createId();
-            educationStore.addItem(education.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Education Created', life: 3000 });
-        }
-
-        // Reset form
-        resetForm();
-    }
-}
+// State variables from useEntity
+const {
+    entityDialog: educationDialog,
+    entity: education,
+    submitted,
+    includedEntities: includedEducation,
+    filters,
+    filteredTags,
+    selectedTags,
+    searchTags,
+    handleTagInput,
+    saveEntity: saveEducation,
+    editEntity: editEducation,
+    deleteEntity: deleteEducation,
+    toggleIncludeEntity: toggleIncludeEducation
+} = useEntity(educationStore);
 
 // Reset form
 function resetForm() {
@@ -133,16 +51,6 @@ function resetForm() {
     };
     selectedTags.value = [];
     submitted.value = false;
-}
-function editEducation(eduToEdit: Education) {
-    education.value = { ...eduToEdit };
-    selectedTags.value = eduToEdit.tags.map((tag) => tag.tagName);
-    educationDialog.value = true;
-}
-
-function deleteEducation(eduId: string) {
-    educationStore.deleteItem(eduId);
-    toast.add({ severity: 'success', summary: 'Successful', detail: 'Education Deleted', life: 3000 });
 }
 </script>
 
@@ -215,18 +123,16 @@ function deleteEducation(eduId: string) {
                             <h4 class="m-0">Education</h4>
                             <span class="p-input-icon-left">
                                 <i class="pi pi-search" />
-                                <InputText v-model="filters['global'].value" placeholder="Search..." />
+                                <InputText v-model="filters.global.value" placeholder="Search..." />
                             </span>
                         </div>
                     </template>
-
                     <!-- Included Checkbox Column -->
                     <Column field="included" header="Included" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Checkbox :value="slotProps.data.id" v-model="includedEducation" @change="() => toggleIncludeEducation(slotProps.data.id)" />
+                            <Checkbox :value="slotProps.data.id" v-model="includedEducation" @change="toggleIncludeEducation(slotProps.data.id)" />
                         </template>
                     </Column>
-
                     <!-- Other Columns -->
                     <Column field="schoolName" header="School Name" sortable style="min-width: 12rem" />
                     <Column field="degreeName" header="Degree Name" sortable style="min-width: 12rem" />
@@ -248,7 +154,6 @@ function deleteEducation(eduId: string) {
                             </div>
                         </template>
                     </Column>
-
                     <!-- Actions Column -->
                     <Column header="Actions" style="min-width: 8rem">
                         <template #body="slotProps">

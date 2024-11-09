@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
+import Checkbox from 'primevue/checkbox';
+
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 

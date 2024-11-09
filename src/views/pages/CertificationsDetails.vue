@@ -7,114 +7,44 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
+import Column from 'primevue/column';
+import Tag from 'primevue/tag';
 
 import { useCertificationsStore, useTagsStore } from '../../stores/resumeDataStore';
-import { Certification } from '../../types/interfaceTypes';
+import { useEntity } from '../composables/useEntity';
+import { Certification, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
 const certificationStore = useCertificationsStore();
 const tagsStore = useTagsStore();
 const toast = useToast();
 
-// State variables
-const certificationDialog = ref(false);
-const certification = ref<Certification>({
-    id: '',
-    createDate: new Date(),
-    included: false,
-    tags: [],
-    orgName: '',
-    certName: '',
-    details: ''
-});
-const submitted = ref(false);
-
-// For tag suggestions and selection
-const filteredTags = ref<string[]>([]);
-const selectedTags = ref<string[]>([]);
-
-// For included certifications
-const includedCertifications = ref<string[]>([]);
-
-// Filters for DataTable
-const filters = ref({
-    global: { value: '' }
-});
+// State variables from useEntity
+const {
+    entityDialog: certificationDialog,
+    entity: certification,
+    submitted,
+    includedEntities: includedCertifications,
+    filters,
+    filteredTags,
+    selectedTags,
+    searchTags,
+    handleTagInput,
+    saveEntity: saveCertification,
+    editEntity: editCertification,
+    deleteEntity: deleteCertification,
+    toggleIncludeEntity: toggleIncludeCertification
+} = useEntity(certificationStore);
 
 onMounted(async () => {
-    await Promise.all([certificationStore.loadItems(), tagsStore.loadItems()]);
+    await certificationStore.loadItems();
+    await tagsStore.loadItems();
 
     // Initialize selectedTags when editing
-    if (certification.value.tags.length > 0) {
-        selectedTags.value = certification.value.tags.map((tag) => tag.tagName);
+    if (certification.value.tags && certification.value.tags.length > 0) {
+        selectedTags.value = certification.value.tags.map((tag: TagEntity) => tag.tagName);
     }
-
-    // Initialize includedCertifications
-    includedCertifications.value = certificationStore.items.filter((cert) => cert.included).map((cert) => cert.id);
 });
-
-// Function to search and filter tags
-function searchTags(event: { query: string }) {
-    const query = event.query.toLowerCase();
-    filteredTags.value = tagsStore.items.map((tag) => tag.tagName).filter((tagName) => tagName && tagName.toLowerCase().includes(query));
-}
-
-// Function to handle tag input
-function handleTagInput(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-        const input = (event.target as HTMLInputElement).value.trim();
-        if (input && !selectedTags.value.includes(input)) {
-            selectedTags.value.push(input);
-            (event.target as HTMLInputElement).value = ''; // Clear the input field
-        }
-    }
-}
-
-// Function to toggle included property
-function toggleIncludeCertification(certId: string) {
-    const certItem = certificationStore.items.find((cert) => cert.id === certId);
-    if (certItem) {
-        certItem.included = !certItem.included;
-        certificationStore.updateItem(certItem);
-        if (certItem.included) {
-            includedCertifications.value.push(certId);
-        } else {
-            const index = includedCertifications.value.indexOf(certId);
-            if (index !== -1) {
-                includedCertifications.value.splice(index, 1);
-            }
-        }
-    }
-}
-
-// Save skill
-function saveCertification() {
-    submitted.value = true;
-    if (certification.value.certName.trim() && certification.value.orgName.trim()) {
-        // Handle tags
-        certification.value.tags = selectedTags.value.map((tagName) => {
-            let tag = tagsStore.items.find((t) => t.tagName === tagName);
-            if (!tag) {
-                tag = { id: tagsStore.createId(), tagName };
-                tagsStore.addItem(tag);
-            }
-            return tag;
-        });
-
-        // Save or update certification
-        if (certification.value.id) {
-            certificationStore.updateItem(certification.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Certification Updated', life: 3000 });
-        } else {
-            certification.value.id = certificationStore.createId();
-            certificationStore.addItem(certification.value);
-            toast.add({ severity: 'success', summary: 'Successful', detail: 'Certification Created', life: 3000 });
-        }
-
-        // Reset form
-        resetForm();
-    }
-}
 
 // Reset form
 function resetForm() {
@@ -129,16 +59,6 @@ function resetForm() {
     };
     selectedTags.value = [];
     submitted.value = false;
-}
-function editCertification(certToEdit: Certification) {
-    certification.value = { ...certToEdit };
-    selectedTags.value = certToEdit.tags.map((tag) => tag.tagName);
-    certificationDialog.value = true;
-}
-
-function deleteCertification(certId: string) {
-    certificationStore.deleteItem(certId);
-    toast.add({ severity: 'success', summary: 'Successful', detail: 'Certification Deleted', life: 3000 });
 }
 </script>
 
@@ -196,22 +116,21 @@ function deleteCertification(certId: string) {
                     resizableColumns
                     columnResizeMode="fit"
                 >
-                    <InputText v-model="filters.global.value" placeholder="Search..." />
-                    <div class="flex flex-wrap gap-2 items-center justify-between">
-                        <h4 class="m-0">Certifications</h4>
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search" />
-                            <InputText v-model="filters['global'].value" placeholder="Search..." />
-                        </span>
-                    </div>
-
+                    <template #header>
+                        <div class="flex flex-wrap gap-2 items-center justify-between">
+                            <h4 class="m-0">Certifications</h4>
+                            <span class="p-input-icon-left">
+                                <i class="pi pi-search" />
+                                <InputText v-model="filters.global.value" placeholder="Search..." />
+                            </span>
+                        </div>
+                    </template>
                     <!-- Included Checkbox Column -->
                     <Column field="included" header="Included" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Checkbox :value="slotProps.data.id" v-model="includedCertifications" @change="() => toggleIncludeCertification(slotProps.data.id)" />
+                            <Checkbox :value="slotProps.data.id" v-model="includedCertifications" @change="toggleIncludeCertification(slotProps.data.id)" />
                         </template>
                     </Column>
-
                     <!-- Other Columns -->
                     <Column field="orgName" header="Organization" sortable style="min-width: 12rem" />
                     <Column field="certName" header="Certification" sortable style="min-width: 12rem" />
@@ -223,7 +142,6 @@ function deleteCertification(certId: string) {
                             </div>
                         </template>
                     </Column>
-
                     <!-- Actions Column -->
                     <Column header="Actions" style="min-width: 8rem">
                         <template #body="slotProps">
