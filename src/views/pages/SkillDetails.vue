@@ -1,3 +1,5 @@
+//TODO: Refactor with useEntity.ts
+
 <script setup lang="ts">
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';

@@ -1,3 +1,5 @@
+//TODO: Refactor with useEntity.ts
+
 <script setup lang="ts">
 import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
