@@ -15,25 +15,11 @@ import { useEntity } from '../composables/useEntity';
 import { Volunteer, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
-const volunteerStore = useVolunteerStore();
+const entityStore = useVolunteerStore();
 const toast = useToast();
 
 // State variables from useEntity
-const {
-    entityDialog: volunteerDialog,
-    entity: volunteer,
-    submitted,
-    includedEntities: includedVolunteers,
-    filters,
-    filteredTags,
-    selectedTags,
-    searchTags,
-    handleTagInput,
-    saveEntity: saveVolunteer,
-    editEntity: editVolunteer,
-    deleteEntity: deleteVolunteer,
-    toggleIncludeEntity: toggleIncludeVolunteer
-} = useEntity(volunteerStore);
+const { entityDialog: volunteerDialog, entity: volunteer, submitted, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, includedEntities, toggleIncludeEntity } = useEntity(entityStore);
 
 // Reset form
 function resetForm() {
@@ -45,7 +31,7 @@ function resetForm() {
         orgName: '',
         details: ''
     };
-    selectedTags.value = [];
+    relatedTags.value = [];
     submitted.value = false;
 }
 </script>
@@ -69,27 +55,27 @@ function resetForm() {
                     <!-- Tags AutoComplete -->
                     <div class="flex flex-col gap-4 w-full">
                         <label for="tags">Tags</label>
-                        <AutoComplete id="tags" v-model="selectedTags" :suggestions="filteredTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />
+                        <AutoComplete id="tags" v-model="relatedTags" :suggestions="allTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />
                     </div>
                     <!-- Include in Resume Checkbox -->
                     <div class="flex flex-wrap gap-2">
                         <label for="included" class="mr-2">Include in Resume</label>
                         <Checkbox id="included" v-model="volunteer.included" :binary="true" />
                     </div>
-                    <Button label="Save Volunteer" icon="pi pi-save" @click="saveVolunteer" />
+                    <Button label="Save Volunteer" icon="pi pi-save" @click="saveEntity" />
                 </div>
             </div>
 
             <!-- Volunteers Table -->
-            <div v-if="volunteerStore.loading" class="flex justify-center items-center">
+            <div v-if="entityStore.loading" class="flex justify-center items-center">
                 <p>Loading...</p>
             </div>
-            <div v-else-if="volunteerStore.items.length === 0" class="flex flex-col items-center">
+            <div v-else-if="entityStore.items.length === 0" class="flex flex-col items-center">
                 <p>No volunteer entries available. Please add a new volunteer entry.</p>
             </div>
             <div v-else>
                 <DataTable
-                    :value="volunteerStore.items"
+                    :value="entityStore.items"
                     dataKey="id"
                     :paginator="true"
                     :rows="10"
@@ -112,7 +98,7 @@ function resetForm() {
                     <!-- Included Checkbox Column -->
                     <Column field="included" header="Included" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Checkbox :value="slotProps.data.id" v-model="includedVolunteers" @change="toggleIncludeVolunteer(slotProps.data.id)" />
+                            <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                         </template>
                     </Column>
 
@@ -122,7 +108,7 @@ function resetForm() {
                     <Column field="tags" header="Tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
-                                <Tag v-for="tag in slotProps.data.tags" :key="tag.id" :value="tag.tagName" :rounded="true" />
+                                <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
                             </div>
                         </template>
                     </Column>
@@ -130,8 +116,8 @@ function resetForm() {
                     <!-- Actions Column -->
                     <Column header="Actions" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editVolunteer(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteVolunteer(slotProps.data.id)" />
+                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editEntity(slotProps.data)" />
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteEntity(slotProps.data.id)" />
                         </template>
                     </Column>
                 </DataTable>

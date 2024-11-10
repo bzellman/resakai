@@ -8,7 +8,7 @@ export interface TagEntity extends EntityBase {
 
 export interface BaseEntity extends EntityBase {
     createDate: Date;
-    tags: TagEntity[];
+    tags: string[];
     included: boolean;
 }
 

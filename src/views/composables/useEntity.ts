@@ -1,5 +1,5 @@
 // src/composables/useEntity.ts
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useTagsStore } from '@/stores/resumeDataStore';
 import { TagEntity } from '@/types/interfaceTypes';
 
@@ -11,25 +11,27 @@ export function useEntity(entityStore: any) {
     const filters = ref({ global: { value: '' } });
 
     const tagsStore = useTagsStore();
-    const filteredTags = ref<string[]>([]);
-    const selectedTags = ref<string[]>([]);
 
-    onMounted(() => {
-        entityStore.loadItems();
-        tagsStore.loadItems();
+    const relatedTags = ref<string[]>([]); // Define relatedTags as a reactive array
+    const allTags = ref<string[]>([]);
+    const associatedTags = computed(() => relatedTags.value); // Tags associated with the entity being edited
+
+    onMounted(async () => {
+        await entityStore.loadItems();
+        await tagsStore.loadItems();
         includedEntities.value = entityStore.items.filter((item: any) => item.included).map((item: any) => item.id);
     });
 
     function searchTags(event: { query: string }) {
-        const query = event.query ? event.query.toLowerCase() : '';
-        filteredTags.value = tagsStore.items.map((tag) => tag.tagName || '').filter((tagName) => tagName.toLowerCase().includes(query));
+        const query = event.query.toLowerCase();
+        allTags.value = tagsStore.items.filter((tag: TagEntity) => tag.tagName.toLowerCase().includes(query)).map((tag: TagEntity) => tag.tagName); // Return an array of tag names
     }
 
     function handleTagInput(event: KeyboardEvent) {
         if (event.key === 'Enter') {
             const input = (event.target as HTMLInputElement).value.trim();
-            if (input && !selectedTags.value.includes(input)) {
-                selectedTags.value.push(input);
+            if (input && !relatedTags.value.includes(input)) {
+                relatedTags.value.push(input);
                 (event.target as HTMLInputElement).value = '';
             }
         }
@@ -38,14 +40,14 @@ export function useEntity(entityStore: any) {
     function saveEntity() {
         submitted.value = true;
         if (entity.value && Object.keys(entity.value).length > 0) {
-            // Handle tags
-            entity.value.tags = selectedTags.value.map((tagName: string) => {
+            // Handle tags: save tagName to tag IDs
+            entity.value.tags = relatedTags.value.map((tagName: string) => {
                 let tag = tagsStore.items.find((t: TagEntity) => t.tagName === tagName);
                 if (!tag) {
                     tag = { id: tagsStore.createId(), tagName };
                     tagsStore.addItem(tag);
                 }
-                return tag;
+                return tag.id; // Store the tag ID instead of the entire tag object
             });
 
             if (entity.value.id) {
@@ -62,19 +64,21 @@ export function useEntity(entityStore: any) {
             submitted.value = false;
         } else {
             // Handle validation errors
-            // For example, display a notification or highlight invalid fields
         }
     }
 
     function editEntity(itemToEdit: any) {
         entity.value = { ...itemToEdit };
-        selectedTags.value = itemToEdit.tags.map((tag: TagEntity) => tag.tagName);
+        // Map tag IDs to tag names for display
+        relatedTags.value = itemToEdit.tags.map((tagId: string) => {
+            const tag = tagsStore.items.find((t: TagEntity) => t.id === tagId);
+            return tag ? tag.tagName : '';
+        });
         entityDialog.value = true;
     }
 
     function deleteEntity(itemId: string) {
         entityStore.deleteItem(itemId);
-        // Show toast notification if needed
     }
 
     function toggleIncludeEntity(itemId: string) {
@@ -93,14 +97,20 @@ export function useEntity(entityStore: any) {
         }
     }
 
+    function getTagNameById(tagId: string): string {
+        const tag = tagsStore.items.find((t: TagEntity) => t.id === tagId);
+        return tag ? tag.tagName : '';
+    }
+
     return {
         entityDialog,
         entity,
         submitted,
         includedEntities,
         filters,
-        filteredTags,
-        selectedTags,
+        allTags,
+        relatedTags,
+        getTagNameById,
         searchTags,
         handleTagInput,
         saveEntity,

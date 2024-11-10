@@ -1,16 +1,14 @@
-import { useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { Certification, Education, EntityBase, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
 
-function createStore<T extends EntityBase>(storeName: string) {
+function createStore<T extends { id: string }>(storeName: string) {
     return defineStore(storeName, {
         state: () => ({
-            items: useStorage<T[]>(storeName, []),
-            loading: false,
-            error: null
+            items: ref<T[]>([]),
+            loading: ref(false)
         }),
-
         actions: {
             async loadItems() {
                 this.loading = true;
@@ -18,19 +16,18 @@ function createStore<T extends EntityBase>(storeName: string) {
                     const savedItems = localStorage.getItem(storeName);
                     if (savedItems) {
                         const parsedItems = JSON.parse(savedItems) as T[];
-
                         this.items = parsedItems.map((item) => ({
                             ...item,
                             ...(item.hasOwnProperty('createDate') && {
                                 createDate: new Date((item as any).createDate)
                             }),
-                            ...('tags' in item && {
+                            ...(item.hasOwnProperty('tags') && {
                                 tags: (item as any).tags.map((tag: TagEntity) => ({
                                     ...tag
-                                    // If TagEntity has properties needing reconstruction, handle them here
                                 }))
                             })
                         }));
+                        // console.log(this.items);
                     } else {
                         this.items = [];
                     }
@@ -50,8 +47,7 @@ function createStore<T extends EntityBase>(storeName: string) {
             updateItem(updatedItem: T) {
                 const index = this.items.findIndex((item) => item.id === updatedItem.id);
                 if (index !== -1) {
-                    // Update the existing item properties
-                    Object.assign(this.items[index], updatedItem);
+                    -Object.assign(this.items[index], updatedItem);
                     this.saveToStorage();
                 }
             },
@@ -70,7 +66,6 @@ function createStore<T extends EntityBase>(storeName: string) {
                     ...(item.hasOwnProperty('tags') && {
                         tags: item.tags.map((tag: TagEntity) => ({
                             ...tag
-                            // Include other properties of TagEntity as needed
                         }))
                     })
                 }));

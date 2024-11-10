@@ -16,7 +16,7 @@ import { Certification, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
 const certificationStore = useCertificationsStore();
-const tagsStore = useTagsStore();
+// const tagsStore = useTagsStore();
 const toast = useToast();
 
 // State variables from useEntity
@@ -38,7 +38,7 @@ const {
 
 onMounted(async () => {
     await certificationStore.loadItems();
-    await tagsStore.loadItems();
+    // await tagsStore.loadItems();
 
     // Initialize selectedTags when editing
     if (certification.value.tags && certification.value.tags.length > 0) {
@@ -87,6 +87,8 @@ function resetForm() {
                     <div class="flex flex-col gap-4 w-full">
                         <label for="tags">Tags</label>
                         <AutoComplete id="tags" v-model="selectedTags" :suggestions="filteredTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />
+
+                        <!-- <AutoComplete id="tags" v-model="selectedTags" :suggestions="filteredTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" field="tagName" @keydown="handleTagInput" class="w-full" /> -->
                     </div>
                     <!-- Include in Resume Checkbox -->
                     <div class="flex flex-wrap gap-2">
