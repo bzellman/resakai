@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 // import SkillDetails from './SkillDetails.vue';
 // import ProjectDetails from './ProjectDetails.vue';
 // import PersonDetails from './PersonData.vue';
-// import EducationDetails from './EducationDetails.vue';
+import EducationDetails from './EducationDetails.vue';
 import VolunteerDetails from './VolunteerDetails.vue';
 // import ProfessionalSummaries from './ProfessionalSummaries.vue';
 // import CertificationDetails from './CertificationsDetails.vue';
@@ -49,24 +49,25 @@ const handleSearchTags = (event) => {
 
     <div class="card">
         <TabView>
-            <!-- <TabPanel header="My Info">
-                <PersonDetails :globalFilter="globalFilter" />
-            </TabPanel>
-            <TabPanel header="Summaries">
-                <ProfessionalSummaries :globalFilter="globalFilter" />
-            </TabPanel>
-            <TabPanel header="Skills">
-                <SkillDetails :globalFilter="globalFilter" />
-            </TabPanel>
+            <!-- <TabPanel header="My Info"> -->
+            <!-- <PersonDetails :globalFilter="globalFilter" /> -->
+            <!-- </TabPanel> -->
+            <!-- <TabPanel header="Summaries"> -->
+            <!-- <ProfessionalSummaries :globalFilter="globalFilter" /> -->
+            <!-- </TabPanel> -->
+            <!-- <TabPanel header="Skills"> -->
+            <!-- <SkillDetails :globalFilter="globalFilter" /> -->
+            <!-- </TabPanel> -->
             <TabPanel header="Education">
                 <EducationDetails :globalFilter="globalFilter" />
             </TabPanel>
-            <TabPanel header="Certifications">
+            <!-- <TabPanel header="Certifications">
                 <CertificationDetails :globalFilter="globalFilter" />
             </TabPanel>
             <TabPanel header="Project Details">
                 <ProjectDetails :globalFilter="globalFilter" />
             </TabPanel> -->
+
             <TabPanel header="Volunteer Work">
                 <VolunteerDetails :globalFilter="globalFilter" />
             </TabPanel>

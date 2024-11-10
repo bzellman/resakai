@@ -6,8 +6,8 @@ import { Certification, Education, EntityBase, Job, JobDescription, Person, Prof
 function createStore<T extends { id: string }>(storeName: string) {
     return defineStore(storeName, {
         state: () => ({
-            items: ref<T[]>([]),
-            loading: ref(false)
+            items: [] as T[],
+            loading: false
         }),
         actions: {
             async loadItems() {
@@ -22,12 +22,10 @@ function createStore<T extends { id: string }>(storeName: string) {
                                 createDate: new Date((item as any).createDate)
                             }),
                             ...(item.hasOwnProperty('tags') && {
-                                tags: (item as any).tags.map((tag: TagEntity) => ({
-                                    ...tag
-                                }))
+                                // Ensure tags are arrays of plain strings
+                                tags: (item as any).tags.map((tagId: string | TagEntity) => (typeof tagId === 'object' && tagId !== null ? tagId.id : tagId))
                             })
                         }));
-                        // console.log(this.items);
                     } else {
                         this.items = [];
                     }
@@ -35,19 +33,23 @@ function createStore<T extends { id: string }>(storeName: string) {
                     console.error(`Failed to load ${storeName}:`, error);
                     this.items = [];
                 } finally {
+                    console.log(this.items);
                     this.loading = false;
                 }
             },
 
             addItem(item: T) {
+                console.log('Adding item:', item);
                 this.items.push(item);
                 this.saveToStorage();
             },
 
             updateItem(updatedItem: T) {
+                console.log('Updating item:', updatedItem);
+
                 const index = this.items.findIndex((item) => item.id === updatedItem.id);
                 if (index !== -1) {
-                    -Object.assign(this.items[index], updatedItem);
+                    Object.assign(this.items[index], updatedItem);
                     this.saveToStorage();
                 }
             },
@@ -64,11 +66,10 @@ function createStore<T extends { id: string }>(storeName: string) {
                         createDate: (item as any).createDate.toISOString()
                     }),
                     ...(item.hasOwnProperty('tags') && {
-                        tags: item.tags.map((tag: TagEntity) => ({
-                            ...tag
-                        }))
+                        tags: item.tags.map((tagId: string) => tagId) // Ensure tags are plain strings
                     })
                 }));
+                console.log('Saving items to storage:', itemsToStore);
                 localStorage.setItem(storeName, JSON.stringify(itemsToStore));
             },
 

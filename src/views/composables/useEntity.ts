@@ -1,5 +1,7 @@
 // src/composables/useEntity.ts
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, isProxy, toRaw } from 'vue';
+import { isProxy, toRaw } from 'vue';
+
 import { useTagsStore } from '@/stores/resumeDataStore';
 import { TagEntity } from '@/types/interfaceTypes';
 
@@ -40,14 +42,14 @@ export function useEntity(entityStore: any) {
     function saveEntity() {
         submitted.value = true;
         if (entity.value && Object.keys(entity.value).length > 0) {
-            // Handle tags: save tagName to tag IDs
+            // Map tag names to tag IDs
             entity.value.tags = relatedTags.value.map((tagName: string) => {
-                let tag = tagsStore.items.find((t: TagEntity) => t.tagName === tagName);
+                let tag = tagsStore.items.find((t) => t.tagName === tagName);
                 if (!tag) {
                     tag = { id: tagsStore.createId(), tagName };
                     tagsStore.addItem(tag);
                 }
-                return tag.id; // Store the tag ID instead of the entire tag object
+                return tag.id; // Ensure you return tag.id, a string
             });
 
             if (entity.value.id) {
@@ -61,6 +63,7 @@ export function useEntity(entityStore: any) {
             }
             entityDialog.value = false;
             entity.value = {};
+            relatedTags.value = [];
             submitted.value = false;
         } else {
             // Handle validation errors
@@ -71,7 +74,7 @@ export function useEntity(entityStore: any) {
         entity.value = { ...itemToEdit };
         // Map tag IDs to tag names for display
         relatedTags.value = itemToEdit.tags.map((tagId: string) => {
-            const tag = tagsStore.items.find((t: TagEntity) => t.id === tagId);
+            const tag = tagsStore.items.find((t) => t.id === tagId);
             return tag ? tag.tagName : '';
         });
         entityDialog.value = true;
@@ -97,8 +100,27 @@ export function useEntity(entityStore: any) {
         }
     }
 
-    function getTagNameById(tagId: string): string {
-        const tag = tagsStore.items.find((t: TagEntity) => t.id === tagId);
+    function getTagNameById(tagId: any): string {
+        console.log('getTagNameById', tagId, typeof tagId);
+        let actualTagId = '';
+
+        if (typeof tagId === 'string') {
+            actualTagId = tagId;
+        } else if (typeof tagId === 'object' && tagId !== null) {
+            // Check if tagId is a TagEntity object
+            if ('id' in tagId) {
+                actualTagId = tagId.id;
+            } else {
+                // Handle unexpected object structure
+                console.warn('Unexpected tagId object structure:', tagId);
+                return '';
+            }
+        } else {
+            console.warn('Invalid tagId type:', typeof tagId, tagId);
+            return '';
+        }
+
+        const tag = tagsStore.items.find((t: TagEntity) => t.id === actualTagId);
         return tag ? tag.tagName : '';
     }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast';
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
@@ -10,31 +10,16 @@ import InputText from 'primevue/inputtext';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 
-import { useEducationStore, useTagsStore } from '../../stores/resumeDataStore';
+import { useEducationStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
-import { Education, TagEntity } from '../../types/interfaceTypes';
+import { Education } from '../../types/interfaceTypes';
 
 // Stores
-const educationStore = useEducationStore();
-const tagsStore = useTagsStore();
+const entityStore = useEducationStore();
 const toast = useToast();
 
 // State variables from useEntity
-const {
-    entityDialog: educationDialog,
-    entity: education,
-    submitted,
-    includedEntities: includedEducation,
-    filters,
-    filteredTags,
-    selectedTags,
-    searchTags,
-    handleTagInput,
-    saveEntity: saveEducation,
-    editEntity: editEducation,
-    deleteEntity: deleteEducation,
-    toggleIncludeEntity: toggleIncludeEducation
-} = useEntity(educationStore);
+const { entityDialog: educationDialog, entity: education, submitted, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, includedEntities, toggleIncludeEntity } = useEntity(entityStore);
 
 // Reset form
 function resetForm() {
@@ -43,15 +28,21 @@ function resetForm() {
         createDate: new Date(),
         included: false,
         tags: [],
-        schoolName: '',
-        degreeName: '',
-        startDate: new Date(),
-        endDate: new Date(),
-        location: ''
+        institution: '',
+        degree: '',
+        fieldOfStudy: '',
+        startDate: '',
+        endDate: '',
+        description: ''
     };
-    selectedTags.value = [];
+    relatedTags.value = [];
     submitted.value = false;
 }
+
+// Load initial data
+onMounted(async () => {
+    await entityStore.loadItems();
+});
 </script>
 
 <template>
@@ -88,27 +79,27 @@ function resetForm() {
                     <!-- Tags AutoComplete -->
                     <div class="flex flex-col gap-4 w-full">
                         <label for="tags">Tags</label>
-                        <AutoComplete id="tags" v-model="selectedTags" :suggestions="filteredTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />
+                        <AutoComplete id="tags" v-model="relatedTags" :suggestions="allTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />
                     </div>
                     <!-- Include in Resume Checkbox -->
                     <div class="flex flex-wrap gap-2">
                         <label for="included" class="mr-2">Include in Resume</label>
                         <Checkbox id="included" v-model="education.included" :binary="true" />
                     </div>
-                    <Button label="Save Education" icon="pi pi-save" @click="saveEducation" />
+                    <Button label="Save Education" icon="pi pi-save" @click="saveEntity" />
                 </div>
             </div>
 
             <!-- Education Table -->
-            <div v-if="educationStore.loading" class="flex justify-center items-center">
+            <div v-if="entityStore.loading" class="flex justify-center items-center">
                 <p>Loading...</p>
             </div>
-            <div v-else-if="educationStore.items.length === 0" class="flex flex-col items-center">
+            <div v-else-if="entityStore.items.length === 0" class="flex flex-col items-center">
                 <p>No education entries available. Please add a new education entry.</p>
             </div>
             <div v-else>
                 <DataTable
-                    :value="educationStore.items"
+                    :value="entityStore.items"
                     dataKey="id"
                     :paginator="true"
                     :rows="10"
@@ -130,7 +121,7 @@ function resetForm() {
                     <!-- Included Checkbox Column -->
                     <Column field="included" header="Included" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Checkbox :value="slotProps.data.id" v-model="includedEducation" @change="toggleIncludeEducation(slotProps.data.id)" />
+                            <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                         </template>
                     </Column>
                     <!-- Other Columns -->
@@ -150,15 +141,15 @@ function resetForm() {
                     <Column field="tags" header="Tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
-                                <Tag v-for="tag in slotProps.data.tags" :key="tag.id" :value="tag.tagName" :rounded="true" />
+                                <Tag v-for="tag in slotProps.data.tags" :key="tag" :value="getTagNameById(tag)" :rounded="true" />
                             </div>
                         </template>
                     </Column>
                     <!-- Actions Column -->
                     <Column header="Actions" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editEducation(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteEducation(slotProps.data.id)" />
+                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editEntity(slotProps.data)" />
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteEntity(slotProps.data.id)" />
                         </template>
                     </Column>
                 </DataTable>
