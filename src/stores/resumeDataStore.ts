@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import { Certification, Education, EntityBase, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
+import { Certification, Education, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, SkillType, TagEntity, Volunteer } from '../types/interfaceTypes';
 
 function createStore<T extends { id: string }>(storeName: string) {
     return defineStore(storeName, {
@@ -30,10 +29,10 @@ function createStore<T extends { id: string }>(storeName: string) {
                         this.items = [];
                     }
                 } catch (error) {
-                    console.error(`Failed to load ${storeName}:`, error);
+                    // console.error(`Failed to load ${storeName}:`, error);
                     this.items = [];
                 } finally {
-                    console.log(this.items);
+                    // console.log(this.items);
                     this.loading = false;
                 }
             },

@@ -1,9 +1,8 @@
 // src/composables/useEntity.ts
-import { ref, onMounted, computed, isProxy, toRaw } from 'vue';
-import { isProxy, toRaw } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import { useTagsStore } from '@/stores/resumeDataStore';
-import { TagEntity } from '@/types/interfaceTypes';
+import { useTagsStore } from '../../stores/resumeDataStore';
+import { TagEntity } from '../../types/interfaceTypes';
 
 export function useEntity(entityStore: any) {
     const entityDialog = ref(false);
@@ -101,7 +100,7 @@ export function useEntity(entityStore: any) {
     }
 
     function getTagNameById(tagId: any): string {
-        console.log('getTagNameById', tagId, typeof tagId);
+        // console.log('getTagNameById', tagId, typeof tagId);
         let actualTagId = '';
 
         if (typeof tagId === 'string') {

@@ -5,14 +5,13 @@ import { onMounted } from 'vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
-import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 
 import { useEducationStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
-import { Education } from '../../types/interfaceTypes';
 
 // Stores
 const entityStore = useEducationStore();
@@ -141,7 +140,7 @@ onMounted(async () => {
                     <Column field="tags" header="Tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
-                                <Tag v-for="tag in slotProps.data.tags" :key="tag" :value="getTagNameById(tag)" :rounded="true" />
+                                <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
                             </div>
                         </template>
                     </Column>
