@@ -1,4 +1,4 @@
-// src/composables/useEntity.ts
+//Todo - allow for CRUD functions by object ID
 import { onMounted, ref } from 'vue';
 
 import { useTagsStore } from '../../stores/resumeDataStore';
@@ -13,9 +13,8 @@ export function useEntity(entityStore: any) {
 
     const tagsStore = useTagsStore();
 
-    const relatedTags = ref<string[]>([]); // Define relatedTags as a reactive array
+    const relatedTags = ref<string[]>([]);
     const allTags = ref<string[]>([]);
-    // const associatedTags = computed(() => relatedTags.value); // Tags associated with the entity being edited
 
     onMounted(async () => {
         await entityStore.loadItems();
@@ -40,9 +39,8 @@ export function useEntity(entityStore: any) {
         }
     }
 
-    function saveEntity(): any | null {
+    function saveEntity() {
         submitted.value = true;
-        let newEntity = null;
         console.log('saved', entity); // Debug log
 
         if (entity.value && Object.keys(entity.value).length > 0) {
@@ -59,12 +57,10 @@ export function useEntity(entityStore: any) {
             if (entity.value.id) {
                 // Update existing entity
                 entityStore.updateItem(entity.value);
-                newEntity = entity.value;
             } else {
                 // Add new entity
                 entity.value.id = entityStore.createId();
                 entity.value.createDate = new Date();
-                newEntity = entity.value;
                 entityStore.addItem(entity.value);
             }
             console.log('saved', entity); // Debug log
@@ -73,7 +69,6 @@ export function useEntity(entityStore: any) {
             entity.value = {};
             relatedTags.value = [];
             submitted.value = false;
-            return newEntity;
         } else {
             // Handle validation errors
         }

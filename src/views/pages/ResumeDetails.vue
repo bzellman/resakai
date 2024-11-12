@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import SkillDetails from './SkillDetails.vue';
-// import PersonDetails from './PersonData.vue';
 import CertificationDetails from './CertificationsDetails.vue';
 import EducationDetails from './EducationDetails.vue';
 import JobHistory from './JobHistory.vue';
+import PersonDetails from './PersonDetails.vue';
 import ProfessionalSummaries from './ProfessionalSummaries.vue';
 import ProjectDetails from './ProjectDetails.vue';
+import SkillDetails from './SkillDetails.vue';
 import VolunteerDetails from './VolunteerDetails.vue';
 
 // Import PrimeVue components
@@ -39,9 +39,9 @@ const tagsStore = useTagsStore();
 
     <div class="card">
         <TabView>
-            <!-- <TabPanel header="My Info"> -->
-            <!-- <PersonDetails :globalFilter="globalFilter" /> -->
-            <!-- </TabPanel> -->
+            <TabPanel header="My Info">
+                <PersonDetails :globalFilter="globalFilter" />
+            </TabPanel>
             <TabPanel header="Summaries">
                 <ProfessionalSummaries />
             </TabPanel>

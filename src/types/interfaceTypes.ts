@@ -35,7 +35,6 @@ export interface Job extends BaseEntity {
 export interface JobDescription extends BaseEntity {
     description: string;
     jobId: string;
-    checked: boolean;
 }
 
 export interface ProfessionalSummary extends BaseEntity {
