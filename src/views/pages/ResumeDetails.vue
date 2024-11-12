@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-// import SkillDetails from './SkillDetails.vue';
+import SkillDetails from './SkillDetails.vue';
 // import PersonDetails from './PersonData.vue';
 import CertificationDetails from './CertificationsDetails.vue';
 import EducationDetails from './EducationDetails.vue';
@@ -48,9 +48,9 @@ const tagsStore = useTagsStore();
             <TabPanel header="Job History">
                 <JobHistory />
             </TabPanel>
-            <!-- <TabPanel header="Skills"> -->
-            <!-- <SkillDetails :globalFilter="globalFilter" /> -->
-            <!-- </TabPanel> -->
+            <TabPanel header="Skills">
+                <SkillDetails :globalFilter="globalFilter" />
+            </TabPanel>
             <TabPanel header="Education">
                 <EducationDetails :globalFilter="globalFilter" />
             </TabPanel>

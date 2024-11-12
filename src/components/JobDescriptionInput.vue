@@ -1,4 +1,3 @@
-// I think I just need better filtering for the id
 <script setup lang="ts">
 // import { useToast } from 'primevue/usetoast';
 
@@ -34,7 +33,6 @@ function saveWithParentId() {
     entity.value.jobId = props.parentJob.id;
     saveEntity();
 }
-// **Use the useEntity composable**
 </script>
 
 <template>
