@@ -1,5 +1,5 @@
 // src/composables/useEntity.ts
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useTagsStore } from '../../stores/resumeDataStore';
 import { TagEntity } from '../../types/interfaceTypes';
@@ -15,7 +15,7 @@ export function useEntity(entityStore: any) {
 
     const relatedTags = ref<string[]>([]); // Define relatedTags as a reactive array
     const allTags = ref<string[]>([]);
-    const associatedTags = computed(() => relatedTags.value); // Tags associated with the entity being edited
+    // const associatedTags = computed(() => relatedTags.value); // Tags associated with the entity being edited
 
     onMounted(async () => {
         await entityStore.loadItems();
@@ -29,17 +29,22 @@ export function useEntity(entityStore: any) {
     }
 
     function handleTagInput(event: KeyboardEvent) {
+        // Debug log
         if (event.key === 'Enter') {
             const input = (event.target as HTMLInputElement).value.trim();
             if (input && !relatedTags.value.includes(input)) {
                 relatedTags.value.push(input);
                 (event.target as HTMLInputElement).value = '';
             }
+            console.log('relatedTags', relatedTags.value);
         }
     }
 
-    function saveEntity() {
+    function saveEntity(): any | null {
         submitted.value = true;
+        let newEntity = null;
+        console.log('saved', entity); // Debug log
+
         if (entity.value && Object.keys(entity.value).length > 0) {
             // Map tag names to tag IDs
             entity.value.tags = relatedTags.value.map((tagName: string) => {
@@ -54,16 +59,21 @@ export function useEntity(entityStore: any) {
             if (entity.value.id) {
                 // Update existing entity
                 entityStore.updateItem(entity.value);
+                newEntity = entity.value;
             } else {
                 // Add new entity
                 entity.value.id = entityStore.createId();
                 entity.value.createDate = new Date();
+                newEntity = entity.value;
                 entityStore.addItem(entity.value);
             }
+            console.log('saved', entity); // Debug log
+
             entityDialog.value = false;
             entity.value = {};
             relatedTags.value = [];
             submitted.value = false;
+            return newEntity;
         } else {
             // Handle validation errors
         }

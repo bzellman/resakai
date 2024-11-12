@@ -10,10 +10,7 @@ import ProjectDetails from './ProjectDetails.vue';
 import VolunteerDetails from './VolunteerDetails.vue';
 
 // Import PrimeVue components
-import InputSwitch from 'primevue/inputswitch';
-import InputText from 'primevue/inputtext';
 import Menubar from 'primevue/menubar';
-import MultiSelect from 'primevue/multiselect';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 
@@ -32,9 +29,9 @@ const tagsStore = useTagsStore();
         <Menubar>
             <template #start>
                 <div>
-                    <MultiSelect v-model="selectedTags" :options="searchTags" placeholder="Select Tags" @complete="handleSearchTags"></MultiSelect>
+                    <!-- <MultiSelect v-model="selectedTags" :options="searchTags" placeholder="Select Tags" @complete="handleSearchTags"></MultiSelect>
                     <InputText v-model="globalFilter" placeholder="Search..."></InputText>
-                    <InputSwitch v-model="showIncludedOnly" class="w-full"></InputSwitch>
+                    <InputSwitch v-model="showIncludedOnly" class="w-full"></InputSwitch> -->
                 </div>
             </template>
         </Menubar>
