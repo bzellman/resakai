@@ -1,13 +1,12 @@
+//ResumeDetails.vue
 <script setup lang="ts">
 import { FilterMatchMode } from '@primevue/core/api';
-import { DataTableFilterMetaData } from 'primevue';
 import Menubar from 'primevue/menubar';
 import MultiSelect from 'primevue/multiselect';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useTagsStore } from '../../stores/resumeDataStore';
-import { useEntity } from '../composables/useEntity';
 import CertificationDetails from './CertificationsDetails.vue';
 import EducationDetails from './EducationDetails.vue';
 import JobHistory from './JobHistory.vue';
@@ -17,17 +16,11 @@ import ProjectDetails from './ProjectDetails.vue';
 import SkillDetails from './SkillDetails.vue';
 import VolunteerDetails from './VolunteerDetails.vue';
 
-export interface TableFilters {
-    selectedTags: DataTableFilterMetaData;
-}
-
-const filters = ref<Record<string, DataTableFilterMetaData>>({
-    selectedTags: { value: null, matchMode: FilterMatchMode.CONTAINS }
+const filters = ref({
+    tags: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
-const selectedTags = ref([]);
 const tagsStore = useTagsStore();
-const { entity: tag, searchTags, handleTagInput } = useEntity(tagsStore);
 
 const allTags = computed(() => {
     return tagsStore.items.map((tag) => ({
@@ -40,8 +33,9 @@ onMounted(async () => {
     await tagsStore.loadItems();
 });
 
-watch(selectedTags, (newTags) => {
-    filters.value.selectedTags.value = newTags;
+watch(filters, (tags) => {
+    // filters.value.selectedTags = newTags;
+    console.log('new Filters tags:', tags);
 });
 </script>
 
@@ -50,7 +44,7 @@ watch(selectedTags, (newTags) => {
         <Menubar>
             <template #start>
                 <div>
-                    <MultiSelect v-model="selectedTags" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags" @change="handleTagInput"></MultiSelect>
+                    <MultiSelect v-model="filters.tags.value" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags"></MultiSelect>
                 </div>
             </template>
         </Menubar>

@@ -1,14 +1,12 @@
-//TODO: Refactor with useEntity.ts
+//SkillDetails.vue
 
 <script setup lang="ts">
-import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
-import DataTable, { DataTableFilterMetaData } from 'primevue/datatable';
-import InputText from 'primevue/inputtext';
+import DataTable from 'primevue/datatable';
 import Tag from 'primevue/tag';
-import { onMounted, ref, watch, type PropType } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useSkillsStore, useSkillTypesStore, useTagsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
@@ -19,9 +17,14 @@ const tagsStore = useTagsStore();
 
 const props = defineProps({
     filters: {
-        type: Object as PropType<Record<string, DataTableFilterMetaData>>,
+        type: Object,
         required: true
     }
+});
+
+watch(props.filters, (newFilters) => {
+    console.log('skillStore', skillStore.items);
+    console.log('new Filters Recieved:', newFilters);
 });
 
 // State variables
@@ -58,15 +61,11 @@ const showAddSkillDialog = () => {
     skill.value = {};
     submitted.value = false;
 };
-
-watch(props.filters, (newFilters) => {
-    console.log('new Filters:', newFilters);
-});
 </script>
 
 <template>
     <div class="card">
-        <DataTable :value="skillStore.items" dataKey="id" :paginator="true" :rows="10" :filters="props.filters" filter-display="menu">
+        <DataTable :value="skillStore.items" :filters="filters" paginator :rows="10" dataKey="id">
             <!-- Table Header -->
             <template #header>
                 <div class="flex justify-between">
@@ -75,13 +74,13 @@ watch(props.filters, (newFilters) => {
                 </div>
             </template>
             <!-- Columns -->
-            <Column field="skillName" header="Skill Name" sortable filter filterPlaceholder="Search by name" />
+            <Column field="skillName" header="Skill Name" Placeholder="Search by name" />
             <Column header="Skill Types">
                 <template #body="slotProps">
                     {{ slotProps.data.associatedSkillTypeNames.join(', ') || '' }}
                 </template>
             </Column>
-            <Column header="Tags" :filter="true" filterField="selectedTags" filterMatchMode="contains">
+            <Column header="Tags" filterField="tags">
                 <template #body="slotProps">
                     <div class="flex flex-wrap gap-1">
                         <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
