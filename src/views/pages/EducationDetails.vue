@@ -21,22 +21,22 @@ const toast = useToast();
 const { entityDialog: educationDialog, entity: education, submitted, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, includedEntities, toggleIncludeEntity } = useEntity(entityStore);
 
 // Reset form
-function resetForm() {
-    education.value = {
-        id: '',
-        createDate: new Date(),
-        included: false,
-        tags: [],
-        institution: '',
-        degree: '',
-        fieldOfStudy: '',
-        startDate: '',
-        endDate: '',
-        description: ''
-    };
-    relatedTags.value = [];
-    submitted.value = false;
-}
+// function resetForm() {
+//     education.value = {
+//         id: '',
+//         createDate: new Date(),
+//         included: false,
+//         tags: [],
+//         institution: '',
+//         degree: '',
+//         fieldOfStudy: '',
+//         startDate: '',
+//         endDate: '',
+//         description: ''
+//     };
+//     relatedTags.value = [];
+//     submitted.value = false;
+// }
 
 // Load initial data
 onMounted(async () => {

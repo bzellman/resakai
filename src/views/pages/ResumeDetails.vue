@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { FilterMatchMode } from '@primevue/core/api';
+import { DataTableFilterMetaData } from 'primevue';
+import Menubar from 'primevue/menubar';
+import MultiSelect from 'primevue/multiselect';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useTagsStore } from '../../stores/resumeDataStore';
+import { useEntity } from '../composables/useEntity';
 import CertificationDetails from './CertificationsDetails.vue';
 import EducationDetails from './EducationDetails.vue';
 import JobHistory from './JobHistory.vue';
@@ -9,19 +17,32 @@ import ProjectDetails from './ProjectDetails.vue';
 import SkillDetails from './SkillDetails.vue';
 import VolunteerDetails from './VolunteerDetails.vue';
 
-// Import PrimeVue components
-import Menubar from 'primevue/menubar';
-import TabPanel from 'primevue/tabpanel';
-import TabView from 'primevue/tabview';
+export interface TableFilters {
+    selectedTags: DataTableFilterMetaData;
+}
 
-// Centralized filter state
-const globalFilter = ref('');
+const filters = ref<Record<string, DataTableFilterMetaData>>({
+    selectedTags: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+
 const selectedTags = ref([]);
-const showIncludedOnly = ref(false);
-
-import { useTagsStore } from '../../stores/resumeDataStore';
-
 const tagsStore = useTagsStore();
+const { entity: tag, searchTags, handleTagInput } = useEntity(tagsStore);
+
+const allTags = computed(() => {
+    return tagsStore.items.map((tag) => ({
+        label: tag.tagName,
+        value: tag.id
+    }));
+});
+
+onMounted(async () => {
+    await tagsStore.loadItems();
+});
+
+watch(selectedTags, (newTags) => {
+    filters.value.selectedTags.value = newTags;
+});
 </script>
 
 <template>
@@ -29,9 +50,7 @@ const tagsStore = useTagsStore();
         <Menubar>
             <template #start>
                 <div>
-                    <!-- <MultiSelect v-model="selectedTags" :options="searchTags" placeholder="Select Tags" @complete="handleSearchTags"></MultiSelect>
-                    <InputText v-model="globalFilter" placeholder="Search..."></InputText>
-                    <InputSwitch v-model="showIncludedOnly" class="w-full"></InputSwitch> -->
+                    <MultiSelect v-model="selectedTags" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags" @change="handleTagInput"></MultiSelect>
                 </div>
             </template>
         </Menubar>
@@ -40,7 +59,7 @@ const tagsStore = useTagsStore();
     <div class="card">
         <TabView>
             <TabPanel header="My Info">
-                <PersonDetails :globalFilter="globalFilter" />
+                <PersonDetails />
             </TabPanel>
             <TabPanel header="Summaries">
                 <ProfessionalSummaries />
@@ -49,20 +68,19 @@ const tagsStore = useTagsStore();
                 <JobHistory />
             </TabPanel>
             <TabPanel header="Skills">
-                <SkillDetails :globalFilter="globalFilter" />
+                <SkillDetails :filters="filters" />
             </TabPanel>
             <TabPanel header="Education">
-                <EducationDetails :globalFilter="globalFilter" />
+                <EducationDetails />
             </TabPanel>
             <TabPanel header="Certifications">
-                <CertificationDetails :globalFilter="globalFilter" />
+                <CertificationDetails />
             </TabPanel>
             <TabPanel header="Project Details">
-                <ProjectDetails :globalFilter="globalFilter" />
+                <ProjectDetails />
             </TabPanel>
-
             <TabPanel header="Volunteer Work">
-                <VolunteerDetails :globalFilter="globalFilter" />
+                <VolunteerDetails />
             </TabPanel>
         </TabView>
     </div>

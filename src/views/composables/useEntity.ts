@@ -1,10 +1,9 @@
-//Todo - allow for CRUD functions by object ID
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { useTagsStore } from '../../stores/resumeDataStore';
 import { TagEntity } from '../../types/interfaceTypes';
 
-export function useEntity(entityStore: any) {
+export function useEntity(entityStore: any, selectedTags = ref<string[]>([]), showIncludedOnly = ref(false)) {
     const entityDialog = ref(false);
     const entity = ref<any>({});
     const submitted = ref(false);
@@ -20,6 +19,24 @@ export function useEntity(entityStore: any) {
         await entityStore.loadItems();
         await tagsStore.loadItems();
         includedEntities.value = entityStore.items.filter((item: any) => item.included).map((item: any) => item.id);
+    });
+
+    const filteredEntities = computed(() => {
+        let entities = entityStore.items;
+
+        // Filter by selected tags
+        if ((selectedTags.value ?? []).length > 0) {
+            entities = entities.filter((entity) => {
+                return entity.tags.some((tag) => (selectedTags.value ?? []).includes(tag));
+            });
+        }
+
+        // Filter by included items
+        if (showIncludedOnly.value) {
+            entities = entities.filter((entity) => entity.included);
+        }
+
+        return entities;
     });
 
     function searchTags(event: { query: string }) {
@@ -142,6 +159,7 @@ export function useEntity(entityStore: any) {
         saveEntity,
         editEntity,
         deleteEntity,
-        toggleIncludeEntity
+        toggleIncludeEntity,
+        filteredEntities
     };
 }
