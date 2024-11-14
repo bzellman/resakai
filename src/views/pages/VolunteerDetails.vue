@@ -1,25 +1,45 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast';
-import { onMounted, ref } from 'vue';
 
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
-import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 
 import { useVolunteerStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
-import { Volunteer, TagEntity } from '../../types/interfaceTypes';
 
 // Stores
 const entityStore = useVolunteerStore();
 const toast = useToast();
 
+const props = defineProps({
+    filters: {
+        type: Object,
+        required: true
+    }
+});
+
 // State variables from useEntity
-const { entityDialog: volunteerDialog, entity: volunteer, submitted, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, includedEntities, toggleIncludeEntity } = useEntity(entityStore);
+const {
+    entityDialog: volunteerDialog,
+    entity: volunteer,
+    submitted,
+    filters: filterFromEntity,
+    allTags,
+    relatedTags,
+    searchTags,
+    handleTagInput,
+    getTagNameById,
+    saveEntity,
+    editEntity,
+    deleteEntity,
+    includedEntities,
+    toggleIncludeEntity
+} = useEntity(entityStore);
 
 // Reset form
 function resetForm() {
@@ -76,6 +96,7 @@ function resetForm() {
             <div v-else>
                 <DataTable
                     :value="entityStore.items"
+                    :filters="filters"
                     dataKey="id"
                     :paginator="true"
                     :rows="10"
@@ -85,18 +106,8 @@ function resetForm() {
                     resizableColumns
                     columnResizeMode="fit"
                 >
-                    <template #header>
-                        <div class="flex flex-wrap gap-2 items-center justify-between">
-                            <h4 class="m-0">Volunteers</h4>
-                            <span class="p-input-icon-left">
-                                <i class="pi pi-search" />
-                                <InputText v-model="filters.global.value" placeholder="Search..." />
-                            </span>
-                        </div>
-                    </template>
-
                     <!-- Included Checkbox Column -->
-                    <Column field="included" header="Included" style="min-width: 8rem">
+                    <Column filterField="included" header="Included" style="min-width: 8rem">
                         <template #body="slotProps">
                             <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                         </template>
@@ -105,7 +116,7 @@ function resetForm() {
                     <!-- Other Columns -->
                     <Column field="orgName" header="Organization" sortable style="min-width: 12rem" />
                     <Column field="details" header="Details" sortable style="min-width: 16rem" />
-                    <Column field="tags" header="Tags" style="min-width: 16rem">
+                    <Column filterField="tags" header="Tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
                                 <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
