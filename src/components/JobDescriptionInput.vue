@@ -9,7 +9,7 @@ import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useJobDescriptionsStore } from '../stores/resumeDataStore';
 import { Job } from '../types/interfaceTypes';
 import { useEntity } from '../views/composables/useEntity';
@@ -26,6 +26,7 @@ const entityStore = useJobDescriptionsStore();
 const filteredItems = computed(() => {
     return entityStore.items.filter((item) => item.jobId === props.parentJob.id);
 });
+
 const {
     entityDialog: projectDialog,
     entity,
@@ -42,11 +43,6 @@ const {
     deleteEntity,
     toggleIncludeEntity
 } = useEntity(entityStore);
-
-onMounted(async () => {
-    console.log('rrr: onMounted', props.parentJob.companyName);
-    console.log('rrr: onMounted', props.parentJob.id);
-});
 
 function saveWithParentId() {
     entity.value.jobId = props.parentJob.id;

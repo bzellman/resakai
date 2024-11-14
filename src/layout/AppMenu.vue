@@ -13,6 +13,11 @@ const model = ref([
                 label: 'Resume Details',
                 icon: 'pi pi-fw pi-circle-off',
                 to: '/pages/resumedetails'
+            },
+            {
+                label: 'Active Resume',
+                icon: 'pi pi-fw pi-circle-off',
+                to: '/pages/activeresume'
             }
         ]
     }
