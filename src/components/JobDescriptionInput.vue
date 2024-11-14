@@ -16,6 +16,10 @@ import { useEntity } from '../views/composables/useEntity';
 
 const props = defineProps<{
     parentJob: Job;
+    filters: {
+        type: Object;
+        required: true;
+    };
 }>();
 
 const entityStore = useJobDescriptionsStore();

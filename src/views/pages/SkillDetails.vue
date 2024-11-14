@@ -6,7 +6,7 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Tag from 'primevue/tag';
-import { onMounted, watch } from 'vue';
+import { onMounted } from 'vue';
 import { useSkillsStore, useSkillTypesStore, useTagsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
@@ -22,10 +22,10 @@ const props = defineProps({
     }
 });
 
-watch(props.filters, (newFilters) => {
-    console.log('skillStore', skillStore.items);
-    console.log('new Filters Recieved:', newFilters);
-});
+// watch(props.filters, (newFilters) => {
+//     console.log('skillStore', skillStore.items);
+//     console.log('new Filters Recieved:', newFilters);
+// });
 
 // State variables
 const {

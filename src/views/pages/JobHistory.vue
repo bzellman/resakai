@@ -10,6 +10,13 @@ import { useEntity } from '../composables/useEntity';
 const toast = useToast();
 const jobsStore = useJobsStore();
 
+const props = defineProps({
+    filters: {
+        type: Object,
+        required: true
+    }
+});
+
 const {
     entityDialog: jobDialog,
     entity: job,

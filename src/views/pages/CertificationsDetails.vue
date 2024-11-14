@@ -6,14 +6,14 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { useToast } from 'primevue/usetoast';
+// import { useToast } from 'primevue/usetoast';
 import { onMounted } from 'vue';
 import { useCertificationsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
 // Stores
 const entityStore = useCertificationsStore();
-const toast = useToast();
+// const toast = useToast();
 
 // State variables from useEntity
 const {
@@ -21,7 +21,7 @@ const {
     entity: certification,
     submitted,
     includedEntities,
-    filters,
+    filters: filterFromEntity,
     allTags,
     relatedTags,
     searchTags,
@@ -32,6 +32,13 @@ const {
     deleteEntity,
     toggleIncludeEntity
 } = useEntity(entityStore);
+
+const props = defineProps({
+    filters: {
+        type: Object,
+        required: true
+    }
+});
 
 // Reset form
 function resetForm() {
@@ -97,18 +104,9 @@ onMounted(async () => {
                 <p>No certifications available. Please add a new certification.</p>
             </div>
             <div v-else>
-                <DataTable :value="entityStore.items" dataKey="id" :paginator="true" :rows="10">
-                    <template #header>
-                        <div class="flex flex-wrap gap-2 items-center justify-between">
-                            <h4 class="m-0">Certifications</h4>
-                            <span class="p-input-icon-left">
-                                <i class="pi pi-search" />
-                                <InputText v-model="filters.global.value" placeholder="Search..." />
-                            </span>
-                        </div>
-                    </template>
+                <DataTable :value="entityStore.items" :filters="filters" paginator :rows="10" dataKey="id">
                     <!-- Other Columns -->
-                    <Column field="included" header="Included" sortable style="min-width: 12rem">
+                    <Column filterField="included" header="Included" style="min-width: 12rem">
                         <template #body="slotProps">
                             <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                         </template>
@@ -116,7 +114,7 @@ onMounted(async () => {
                     <Column field="orgName" header="Organization" sortable style="min-width: 12rem"></Column>
                     <Column field="certName" header="Certification" sortable style="min-width: 12rem"></Column>
                     <Column field="details" header="Details" style="min-width: 16rem"></Column>
-                    <Column field="tags" header="Tags" style="min-width: 16rem">
+                    <Column header="Tags" filterField="tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
                                 <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />

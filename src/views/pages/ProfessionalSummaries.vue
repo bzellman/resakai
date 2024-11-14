@@ -19,6 +19,13 @@ const toast = useToast();
 // Use the useEntity composable
 const { entityDialog: summaryDialog, entity: summary, submitted, includedEntities, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, toggleIncludeEntity } = useEntity(entityStore);
 
+const props = defineProps({
+    filters: {
+        type: Object,
+        required: true
+    }
+});
+
 // Reset form
 function resetForm() {
     summary.value = {

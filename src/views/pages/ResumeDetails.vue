@@ -42,8 +42,6 @@ onMounted(async () => {
                 <div class="flex items-center gap-4">
                     <MultiSelect v-model="filters.tags.value" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags"></MultiSelect>
                     <ToggleSwitch v-model="filters.included.value" :true-value="true" :false-value="null" />
-
-                    <!-- <ToggleButton v-model="filters.included.value" onLabel="Included Only" offLabel="All" :onIcon="'pi pi-check'" :offIcon="'pi pi-times'" /> -->
                 </div>
             </template>
         </Menubar>

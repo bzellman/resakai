@@ -20,6 +20,13 @@ const toast = useToast();
 // State variables from useEntity
 const { entityDialog: educationDialog, entity: education, submitted, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, includedEntities, toggleIncludeEntity } = useEntity(entityStore);
 
+const props = defineProps({
+    filters: {
+        type: Object,
+        required: true
+    }
+});
+
 // Reset form
 // function resetForm() {
 //     education.value = {
