@@ -2,7 +2,6 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { computed, onMounted, ref } from 'vue';
-import * as html2pdf from '../../../node_modules/html2pdf.js/dist/html2pdf.bundle.js';
 import { useCertificationsStore, useEducationStore, useJobDescriptionsStore, useJobsStore, usePersonsStore, useProjectsStore, useSkillsStore, useSummaryStore, useVolunteerStore } from '../../stores/resumeDataStore';
 import { Certification, Education, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, Volunteer } from '../../types/interfaceTypes';
 
@@ -86,59 +85,75 @@ const getJobDescriptions = (jobId: string) => {
     return jobDescriptions.value.filter((desc) => desc.jobId === jobId);
 };
 
-// Update the PDF export function
-
-// interface PDFOptions {
-//     margin: number;
-//     filename: string;
-//     image: {
-//         type: string;
-//         quality: number;
-//     };
-//     html2canvas: {
-//         scale: number;
-//         useCORS: boolean;
-//         letterRendering: boolean;
-//     };
-//     jsPDF: {
-//         unit: string;
-//         format: string;
-//         orientation: string;
-//     };
-// }
 const exportToPDF = async (): Promise<void> => {
     try {
         const element = document.querySelector('.resume-container');
+        if (!element) {
+            throw new Error('Resume container element not found');
+        }
 
-        if (!element) throw new Error('Resume container element not found');
-
+        // Generate high-quality canvas
         const canvas = await html2canvas(element as HTMLElement, {
             scale: 2,
-            useCORS: true
+            useCORS: true,
+            logging: true,
+            backgroundColor: '#ffffff'
         });
-        const options = {
-            margin: 10,
-            filename: 'document.pdf',
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                letterRendering: true
-            },
-            jsPDF: {
-                unit: 'mm',
-                format: 'a4',
-                orientation: 'portrait'
-            }
-        };
 
-        html2pdf(element).set(options).save();
+        // PDF Configuration
+        const pdf = new jsPDF({
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        });
+
+        // A4 dimensions and margins (in mm)
+        const margin = 10;
+        const pageWidth = 210; // A4 width
+        const pageHeight = 297; // A4 height
+        const contentWidth = pageWidth - 2 * margin;
+
+        // Calculate dimensions preserving aspect ratio
+        const aspectRatio = canvas.width / canvas.height;
+        const imgWidth = contentWidth;
+        const imgHeight = imgWidth / aspectRatio;
+
+        // Calculate how many pixels of the canvas can fit on one page
+        const pageContentHeight = pageHeight - 2 * margin;
+        const pixelsPerPage = (pageContentHeight * canvas.height) / imgHeight;
+        const totalPages = Math.ceil(canvas.height / pixelsPerPage);
+
+        for (let i = 0; i < totalPages; i++) {
+            if (i > 0) {
+                pdf.addPage();
+            }
+
+            // Calculate the source region from the canvas
+            const sourceHeight = Math.min(pixelsPerPage, canvas.height - i * pixelsPerPage);
+            const sourceY = i * pixelsPerPage;
+
+            // Calculate the height to render on this page (preserving aspect ratio)
+            const renderHeight = (sourceHeight * imgWidth) / canvas.width;
+
+            // Extract the portion of the canvas for this page
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = sourceHeight;
+            const ctx = tempCanvas.getContext('2d');
+
+            if (ctx) {
+                ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                // Add to PDF with preserved aspect ratio
+                const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+                pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, renderHeight);
+            }
+        }
+
+        pdf.save('resume.pdf');
     } catch (error) {
         console.error('PDF generation failed:', error);
-        throw error; // Re-throw to handle in UI if needed
+        throw error;
     }
 };
 </script>
@@ -270,6 +285,8 @@ const exportToPDF = async (): Promise<void> => {
     font-family: Arial, sans-serif;
     line-height: 1.5;
     color: #333;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 /* Header styles */
@@ -401,28 +418,66 @@ const exportToPDF = async (): Promise<void> => {
     /* // ...existing print styles... */
 }
 
-/* Print styles */
+.section {
+    margin-bottom: 2rem;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+}
+
+.job-item,
+.project-item,
+.education-item,
+.certification-item,
+.volunteer-item {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+}
+
+.header-section {
+    break-after: avoid-page;
+    page-break-after: avoid;
+}
+
+/* Update the print media query */
 @media print {
     .resume-container {
         padding: 0;
         font-size: 11pt;
+        max-width: none;
+        width: 100%;
     }
 
-    .section {
-        page-break-inside: avoid;
+    /* Ensure proper page breaks */
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
     }
 
-    a {
-        text-decoration: none;
-        color: #000;
-    }
-
-    .header-section {
-        margin-bottom: 1rem;
-    }
-
-    .section-heading {
-        margin-bottom: 0.75rem;
+    h2,
+    h3 {
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
 }
+
+.job-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1.5rem;
+}
+
+.job-header,
+.job-title,
+.company-name {
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
+.job-descriptions {
+    break-before: avoid;
+    page-break-before: avoid;
+}
+/* Prevent page breaks inside elements */
 </style>
