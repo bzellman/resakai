@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import blobStream from 'blob-stream';
+import PDFDocument from 'pdfkit';
 import { computed, onMounted, ref } from 'vue';
-import { useCertificationsStore, useEducationStore, useJobsStore, usePersonsStore, useProjectsStore, useSkillsStore, useVolunteerStore } from '../../stores/resumeDataStore';
-import { Certification, Education, Job, Person, Project, SkillName, Volunteer } from '../../types/interfaceTypes';
+
+import { useCertificationsStore, useEducationStore, useJobDescriptionsStore, useJobsStore, usePersonsStore, useProjectsStore, useSkillsStore, useSummaryStore, useVolunteerStore } from '../../stores/resumeDataStore';
+import { Certification, Education, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, Volunteer } from '../../types/interfaceTypes';
 
 // Stores
 const personsStore = usePersonsStore();
@@ -11,6 +14,8 @@ const volunteerStore = useVolunteerStore();
 const projectsStore = useProjectsStore();
 const certificationsStore = useCertificationsStore();
 const educationStore = useEducationStore();
+const professionalSummaryStore = useSummaryStore();
+const jobDescriptionsStore = useJobDescriptionsStore();
 
 // State variables
 const person = ref<Person | null>(null);
@@ -20,18 +25,32 @@ const volunteers = ref<Volunteer[]>([]);
 const projects = ref<Project[]>([]);
 const certifications = ref<Certification[]>([]);
 const education = ref<Education[]>([]);
+const professionalSummary = ref<ProfessionalSummary | null>(null);
+const jobDescriptions = ref<JobDescription[]>([]);
 
 // Load data on mounted
 onMounted(async () => {
-    await Promise.all([personsStore.loadItems(), jobsStore.loadItems(), skillsStore.loadItems(), volunteerStore.loadItems(), projectsStore.loadItems(), certificationsStore.loadItems(), educationStore.loadItems()]);
+    await Promise.all([
+        personsStore.loadItems(),
+        jobsStore.loadItems(),
+        skillsStore.loadItems(),
+        volunteerStore.loadItems(),
+        projectsStore.loadItems(),
+        certificationsStore.loadItems(),
+        educationStore.loadItems(),
+        professionalSummaryStore.loadItems(),
+        jobDescriptionsStore.loadItems()
+    ]);
 
     person.value = personsStore.users.length > 0 ? personsStore.users[0] : null;
     jobs.value = jobsStore.items.filter((job) => job.included);
+    jobDescriptions.value = jobDescriptionsStore.items.filter((desc) => desc.included);
     skills.value = skillsStore.items.filter((skill) => skill.included);
     volunteers.value = volunteerStore.items.filter((volunteer) => volunteer.included);
     projects.value = projectsStore.items.filter((project) => project.included);
     certifications.value = certificationsStore.items.filter((cert) => cert.included);
     education.value = educationStore.items.filter((edu) => edu.included);
+    professionalSummary.value = professionalSummaryStore.items.length > 0 ? professionalSummaryStore.items[0] : null;
 });
 
 // Group skills by skill type
@@ -45,85 +64,408 @@ const groupedSkills = computed(() => {
         return acc;
     }, {});
 });
+
+// Format date helper
+const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
+};
+
+// Compute full location
+const getFullLocation = computed(() => {
+    if (!person.value) return '';
+    return `${person.value.city}, ${person.value.state}`.trim();
+});
+
+// Compute descriptions for each job
+const getJobDescriptions = (jobId: string) => {
+    return jobDescriptions.value.filter((desc) => desc.jobId === jobId);
+};
+
+// Update the PDF export function
+
+const exportToPDF = async (): Promise<void> => {
+    try {
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'letter'
+        });
+
+        const stream = doc.pipe(blobStream());
+
+        // Header
+        if (person.value) {
+            doc.fontSize(24).text(person.value.name, { align: 'center' });
+            doc.moveDown();
+
+            const contactInfo = [person.value.email, person.value.phone, getFullLocation.value, person.value.github, person.value.linkedin].filter(Boolean).join(' | ');
+
+            doc.fontSize(10).text(contactInfo, { align: 'center' });
+            doc.moveDown();
+        }
+
+        // Professional Summary
+        if (professionalSummary.value) {
+            doc.fontSize(14).text('Professional Summary', { underline: true });
+            doc.fontSize(10).text(professionalSummary.value.summary);
+            doc.moveDown();
+        }
+
+        // Experience
+        if (jobs.value.length) {
+            doc.fontSize(14).text('Professional Experience', { underline: true });
+            doc.moveDown();
+
+            jobs.value.forEach((job) => {
+                doc.fontSize(12).text(job.jobTitle);
+                doc.fontSize(10).text(`${job.companyName} - ${job.location}`);
+
+                const descriptions = getJobDescriptions(job.id);
+                if (descriptions.length) {
+                    descriptions.forEach((desc) => {
+                        doc.fontSize(10).list([desc.description], { bulletRadius: 2 });
+                    });
+                }
+                doc.moveDown();
+            });
+        }
+
+        // Skills
+        if (Object.keys(groupedSkills.value).length) {
+            doc.fontSize(14).text('Technical Skills', { underline: true });
+            doc.moveDown();
+
+            Object.entries(groupedSkills.value).forEach(([type, skills]) => {
+                doc.fontSize(10).text(`${type}: ${skills.map((s) => s.skillName).join(', ')}`);
+            });
+            doc.moveDown();
+        }
+
+        // Projects
+        if (projects.value.length) {
+            doc.fontSize(14).text('Projects', { underline: true });
+            doc.moveDown();
+
+            projects.value.forEach((project) => {
+                doc.fontSize(12).text(project.projectName);
+                doc.fontSize(10).text(project.projectDetails);
+                doc.moveDown();
+            });
+        }
+
+        // Education
+        if (education.value.length) {
+            doc.fontSize(14).text('Education', { underline: true });
+            doc.moveDown();
+
+            education.value.forEach((edu) => {
+                doc.fontSize(12).text(edu.degreeName);
+                doc.fontSize(10).text(`${edu.schoolName} - ${edu.location}`);
+                doc.moveDown();
+            });
+        }
+
+        // Finalize PDF
+        doc.end();
+
+        // Create download link
+        stream.on('finish', () => {
+            const blob = stream.toBlob('application/pdf');
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'resume.pdf';
+            link.click();
+            window.URL.revokeObjectURL(url);
+        });
+    } catch (error) {
+        console.error('PDF generation failed:', error);
+    }
+};
 </script>
 
 <template>
-    <div class="card">
-        <h2>Resume</h2>
-
-        <!-- Person Details -->
-        <div v-if="person">
-            <h3>Person Details</h3>
-            <p><strong>Name:</strong> {{ person.name }}</p>
-            <p><strong>Email:</strong> {{ person.email }}</p>
-            <p><strong>Phone:</strong> {{ person.phone }}</p>
-            <p><strong>City:</strong> {{ person.city }}</p>
-            <p><strong>State:</strong> {{ person.state }}</p>
-            <p><strong>Github:</strong> {{ person.github }}</p>
-            <p><strong>LinkedIn:</strong> {{ person.linkedin }}</p>
-            <p><strong>Portfolio:</strong> {{ person.portfolio }}</p>
+    <div>
+        <!-- Add Export Button -->
+        <div class="export-container">
+            <Button label="Export PDF" icon="pi pi-file-pdf" @click="exportToPDF" />
         </div>
 
-        <!-- Job History -->
-        <div v-if="jobs.length">
-            <h3>Job History</h3>
-            <div v-for="job in jobs" :key="job.id">
-                <h4>{{ job.jobTitle }} at {{ job.companyName }}</h4>
-                <p>{{ job.location }}</p>
-                <div v-if="job.descriptions && job.descriptions.length">
-                    <h5>Job Descriptions</h5>
-                    <ul>
-                        <li v-for="desc in job.descriptions" :key="desc.id">{{ desc.description }}</li>
+        <div class="resume-container">
+            <!-- Person Details -->
+            <header v-if="person" class="header-section">
+                <h1 class="name-heading">{{ person.name }}</h1>
+                <div class="contact-grid">
+                    <div v-if="person.email" class="contact-item">
+                        <span class="contact-label">Email:</span>
+                        <a :href="`mailto:${person.email}`" class="contact-link">{{ person.email }}</a>
+                    </div>
+                    <div v-if="person.phone" class="contact-item">
+                        <span class="contact-label">Phone:</span>
+                        <span>{{ person.phone }}</span>
+                    </div>
+                    <div v-if="getFullLocation" class="contact-item">
+                        <span class="contact-label">Location:</span>
+                        <span>{{ getFullLocation }}</span>
+                    </div>
+                    <div v-if="person.github" class="contact-item">
+                        <span class="contact-label">GitHub:</span>
+                        <a :href="person.github" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.github }}</a>
+                    </div>
+                    <div v-if="person.linkedin" class="contact-item">
+                        <span class="contact-label">LinkedIn:</span>
+                        <a :href="person.linkedin" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.linkedin }}</a>
+                    </div>
+                    <div v-if="person.portfolio" class="contact-item">
+                        <span class="contact-label">Portfolio:</span>
+                        <a :href="person.portfolio" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.portfolio }}</a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Professional Summary -->
+            <section v-if="professionalSummary" class="section">
+                <h2 class="section-heading">Professional Summary</h2>
+                <p class="summary-text">{{ professionalSummary.summary }}</p>
+            </section>
+
+            <!-- Professional Experience -->
+            <section v-if="jobs.length" class="section">
+                <h2 class="section-heading">Professional Experience</h2>
+                <div v-for="job in jobs" :key="job.id" class="job-item">
+                    <div class="job-header">
+                        <div class="job-title-company">
+                            <h3 class="job-title">{{ job.jobTitle }}</h3>
+                            <div class="company-name">{{ job.companyName }}</div>
+                            <div class="job-location">{{ job.location }}</div>
+                        </div>
+                    </div>
+                    <ul v-if="getJobDescriptions(job.id).length" class="job-descriptions">
+                        <li v-for="desc in getJobDescriptions(job.id)" :key="desc.id" class="job-description">
+                            {{ desc.description }}
+                        </li>
                     </ul>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Skills -->
-        <div v-if="Object.keys(groupedSkills).length">
-            <h3>Skills</h3>
-            <div v-for="(skills, skillType) in groupedSkills" :key="skillType">
-                <h4>{{ skillType }}</h4>
-                <ul>
-                    <li v-for="skill in skills" :key="skill.id">{{ skill.skillName }}</li>
-                </ul>
-            </div>
-        </div>
+            <!-- Skills -->
+            <section v-if="Object.keys(groupedSkills).length" class="section">
+                <h2 class="section-heading">Technical Skills</h2>
+                <div v-for="(skills, skillType) in groupedSkills" :key="skillType" class="skill-group">
+                    <h3 class="skill-type">{{ skillType }}:</h3>
+                    <div class="skill-list">
+                        {{ skills.map((skill) => skill.skillName).join(' • ') }}
+                    </div>
+                </div>
+            </section>
 
-        <!-- Volunteer Work -->
-        <div v-if="volunteers.length">
-            <h3>Volunteer Work</h3>
-            <div v-for="volunteer in volunteers" :key="volunteer.id">
-                <h4>{{ volunteer.orgName }}</h4>
-                <p>{{ volunteer.details }}</p>
-            </div>
-        </div>
+            <!-- Projects -->
+            <section v-if="projects.length" class="section">
+                <h2 class="section-heading">Projects</h2>
+                <div v-for="project in projects" :key="project.id" class="project-item">
+                    <h3 class="project-name">{{ project.projectName }}</h3>
+                    <p class="project-details">{{ project.projectDetails }}</p>
+                </div>
+            </section>
 
-        <!-- Projects -->
-        <div v-if="projects.length">
-            <h3>Projects</h3>
-            <div v-for="project in projects" :key="project.id">
-                <h4>{{ project.projectName }}</h4>
-                <p>{{ project.projectDetails }}</p>
-            </div>
-        </div>
+            <!-- Education -->
+            <section v-if="education.length" class="section">
+                <h2 class="section-heading">Education</h2>
+                <div v-for="edu in education" :key="edu.id" class="education-item">
+                    <div class="education-header">
+                        <div>
+                            <h3 class="degree-name">{{ edu.degreeName }}</h3>
+                            <div class="school-name">{{ edu.schoolName }}</div>
+                            <div class="education-location">{{ edu.location }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Certifications -->
-        <div v-if="certifications.length">
-            <h3>Certifications</h3>
-            <div v-for="cert in certifications" :key="cert.id">
-                <h4>{{ cert.certName }}</h4>
-                <p>{{ cert.details }}</p>
-            </div>
-        </div>
+            <!-- Certifications -->
+            <section v-if="certifications.length" class="section">
+                <h2 class="section-heading">Certifications</h2>
+                <div v-for="cert in certifications" :key="cert.id" class="certification-item">
+                    <h3 class="cert-name">{{ cert.certName }}</h3>
+                    <p class="cert-details">{{ cert.details }}</p>
+                </div>
+            </section>
 
-        <!-- Education -->
-        <div v-if="education.length">
-            <h3>Education</h3>
-            <div v-for="edu in education" :key="edu.id">
-                <h4>{{ edu.degreeName }} at {{ edu.schoolName }}</h4>
-                <p>{{ edu.location }}</p>
-            </div>
+            <!-- Volunteer Work -->
+            <section v-if="volunteers.length" class="section">
+                <h2 class="section-heading">Volunteer Experience</h2>
+                <div v-for="volunteer in volunteers" :key="volunteer.id" class="volunteer-item">
+                    <h3 class="org-name">{{ volunteer.orgName }}</h3>
+                    <p class="volunteer-details">{{ volunteer.details }}</p>
+                </div>
+            </section>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Base styles */
+.resume-container {
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 1.5rem;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* Header styles */
+.header-section {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 1rem;
+}
+
+.name-heading {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+.contact-item {
+    font-size: 0.9rem;
+}
+
+.contact-label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.contact-link {
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+.contact-link:hover {
+    text-decoration: underline;
+}
+
+/* Section styles */
+.section {
+    margin-bottom: 2rem;
+    break-inside: avoid;
+}
+
+.section-heading {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.5rem;
+}
+
+/* Job styles */
+.job-item {
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.job-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.company-name {
+    font-weight: 500;
+}
+
+.job-location,
+.job-dates {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.job-descriptions {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.job-description {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Skills styles */
+.skill-group {
+    margin-bottom: 1rem;
+}
+
+.skill-type {
+    font-weight: 600;
+    display: inline;
+    margin-right: 0.5rem;
+}
+
+.skill-list {
+    display: inline;
+}
+
+/* Professional Summary styles */
+.summary-text {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+/* Add new styles */
+.export-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+}
+
+@media print {
+    .export-container {
+        display: none;
+    }
+    /* // ...existing print styles... */
+}
+
+/* Print styles */
+@media print {
+    .resume-container {
+        padding: 0;
+        font-size: 11pt;
+    }
+
+    .section {
+        page-break-inside: avoid;
+    }
+
+    a {
+        text-decoration: none;
+        color: #000;
+    }
+
+    .header-section {
+        margin-bottom: 1rem;
+    }
+
+    .section-heading {
+        margin-bottom: 0.75rem;
+    }
+}
+</style>

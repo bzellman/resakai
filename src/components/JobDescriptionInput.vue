@@ -20,14 +20,6 @@ const props = defineProps<{
     filters: DataTableFilterMeta;
 }>();
 
-// const props = defineProps({
-//     parentJob: Job;
-//     filters: {
-//         type: Object,
-//         required: true
-//     };
-// });
-
 const entityStore = useJobDescriptionsStore();
 const filteredItems = computed(() => {
     return entityStore.items.filter((item) => item.jobId === props.parentJob.id);
