@@ -3,7 +3,6 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
-import JobDescriptionInput from '../../components/JobDescriptionInput.vue';
 import { useJobsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
@@ -22,7 +21,7 @@ const {
     entity: job,
     submitted,
     includedEntities: includedJobs,
-    filters,
+    filters: filterFromEntity,
     allTags,
     relatedTags,
     searchTags,
@@ -82,16 +81,9 @@ onMounted(async () => {
                 <p>No job data available. Please add a new job.</p>
             </div>
             <div v-else>
-                <DataTable :value="jobsStore.items" dataKey="id" :paginator="true" :rows="10" v-model:expandedRows="expandedRows">
-                    <!-- Table Header -->
-                    <template #header>
-                        <div class="flex justify-between">
-                            <h4>Job History</h4>
-                            <InputText v-model="filters.global.value" placeholder="Search..." />
-                        </div>
-                    </template>
+                <DataTable :value="jobsStore.items" :filters="filters" dataKey="id" :paginator="true" :rows="10" v-model:expandedRows="expandedRows">
                     <!-- Columns -->
-                    <Column field="included" header="Included">
+                    <Column filterField="included" header="Included">
                         <template #body="slotProps">
                             <Checkbox :value="slotProps.data.id" v-model="includedJobs" @change="toggleIncludeJob(slotProps.data.id)" />
                         </template>
@@ -100,7 +92,7 @@ onMounted(async () => {
 
                     <Column field="jobTitle" header="Job Title" sortable></Column>
                     <Column field="companyName" header="Company Name" sortable></Column>
-                    <Column field="tags" header="Tags">
+                    <Column filterField="tags" header="Tags">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
                                 <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
@@ -115,7 +107,7 @@ onMounted(async () => {
                         </template>
                     </Column>
                     <template #expansion="slotProps">
-                        <JobDescriptionInput :parentJob="slotProps.data" />
+                        <JobDescriptionInput :parentJob="slotProps.data" :filters="filters" />
                     </template>
                 </DataTable>
             </div>

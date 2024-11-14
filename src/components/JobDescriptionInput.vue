@@ -26,7 +26,22 @@ const entityStore = useJobDescriptionsStore();
 const filteredItems = computed(() => {
     return entityStore.items.filter((item) => item.jobId === props.parentJob.id);
 });
-const { entityDialog: projectDialog, entity, submitted, includedEntities, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, toggleIncludeEntity } = useEntity(entityStore);
+const {
+    entityDialog: projectDialog,
+    entity,
+    submitted,
+    includedEntities,
+    filters: filterFromEntity,
+    allTags,
+    relatedTags,
+    searchTags,
+    handleTagInput,
+    getTagNameById,
+    saveEntity,
+    editEntity,
+    deleteEntity,
+    toggleIncludeEntity
+} = useEntity(entityStore);
 
 onMounted(async () => {
     console.log('rrr: onMounted', props.parentJob.companyName);
@@ -47,16 +62,16 @@ function saveWithParentId() {
                 <p>Loading...</p>
             </div>
 
-            <DataTable :value="filteredItems" dataKey="id" :paginator="false" :rows="10" :rowsPerPageOptions="[5, 10, 25]" tableStyle="min-width: 60rem" resizableColumns columnResizeMode="fit">
+            <DataTable :value="filteredItems" :filters="filters" dataKey="id" :paginator="false" :rows="10" :rowsPerPageOptions="[5, 10, 25]" tableStyle="min-width: 60rem" resizableColumns columnResizeMode="fit">
                 <!-- Included Checkbox Column -->
-                <Column field="included" header="Included" style="min-width: 8rem">
+                <Column filterField="included" header="Included" style="min-width: 8rem">
                     <template #body="slotProps">
                         <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                     </template>
                 </Column>
                 <!-- Other Columns -->
                 <Column field="description" header="Description Details" sortable style="min-width: 12rem" />
-                <Column field="tags" header="Tags" style="min-width: 16rem">
+                <Column filterField="tags" header="Tags" style="min-width: 16rem">
                     <template #body="slotProps">
                         <div class="flex flex-wrap gap-1">
                             <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
