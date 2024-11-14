@@ -4,7 +4,6 @@ import { FilterMatchMode } from '@primevue/core/api';
 import Menubar from 'primevue/menubar';
 import MultiSelect from 'primevue/multiselect';
 import TabPanel from 'primevue/tabpanel';
-import TabView from 'primevue/tabview';
 import { computed, onMounted, ref } from 'vue';
 import { useTagsStore } from '../../stores/resumeDataStore';
 import CertificationDetails from './CertificationsDetails.vue';
@@ -41,6 +40,7 @@ onMounted(async () => {
             <template #start>
                 <div class="flex items-center gap-4">
                     <MultiSelect v-model="filters.tags.value" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags"></MultiSelect>
+                    <!-- TODO: Refactor to use some kind of get/set to resolve error but use null in filter and falue in ToggleSwitch -->
                     <ToggleSwitch v-model="filters.included.value" :true-value="true" :false-value="null" />
                 </div>
             </template>
@@ -48,31 +48,43 @@ onMounted(async () => {
     </div>
 
     <div class="card">
-        <TabView>
-            <TabPanel header="My Info">
-                <PersonDetails />
-            </TabPanel>
-            <TabPanel header="Summaries">
-                <ProfessionalSummaries :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Job History">
-                <JobHistory :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Skills">
-                <SkillDetails :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Education">
-                <EducationDetails :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Certifications">
-                <CertificationDetails :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Project Details">
-                <ProjectDetails :filters="filters" />
-            </TabPanel>
-            <TabPanel header="Volunteer Work">
-                <VolunteerDetails :filters="filters" />
-            </TabPanel>
-        </TabView>
+        <Tabs value="0">
+            <TabList>
+                <Tab value="0">My Info</Tab>
+                <Tab value="1">Summaries</Tab>
+                <Tab value="2">Job History</Tab>
+                <Tab value="3">Skills</Tab>
+                <Tab value="4">Education</Tab>
+                <Tab value="5">Certifications</Tab>
+                <Tab value="6">Project Details</Tab>
+                <Tab value="7">Volunteer Work</Tab>
+            </TabList>
+            <TabPanels>
+                <TabPanel value="0">
+                    <PersonDetails />
+                </TabPanel>
+                <TabPanel value="1">
+                    <ProfessionalSummaries :filters="filters" />
+                </TabPanel>
+                <TabPanel value="2">
+                    <JobHistory :filters="filters" />
+                </TabPanel>
+                <TabPanel value="3">
+                    <SkillDetails :filters="filters" />
+                </TabPanel>
+                <TabPanel value="4">
+                    <EducationDetails :filters="filters" />
+                </TabPanel>
+                <TabPanel value="5">
+                    <CertificationDetails :filters="filters" />
+                </TabPanel>
+                <TabPanel value="6">
+                    <ProjectDetails :filters="filters" />
+                </TabPanel>
+                <TabPanel value="7">
+                    <VolunteerDetails :filters="filters" />
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
     </div>
 </template>

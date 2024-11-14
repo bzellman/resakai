@@ -6,14 +6,15 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Tag from 'primevue/tag';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useSkillsStore, useSkillTypesStore, useTagsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
-// Stores
 const skillStore = useSkillsStore();
 const skillTypesStore = useSkillTypesStore();
 const tagsStore = useTagsStore();
+const selectedSkillTypes = ref<string[]>([]);
+const filteredSkillTypes = ref<string[]>([]);
 
 const props = defineProps({
     filters: {
@@ -22,12 +23,6 @@ const props = defineProps({
     }
 });
 
-// watch(props.filters, (newFilters) => {
-//     console.log('skillStore', skillStore.items);
-//     console.log('new Filters Recieved:', newFilters);
-// });
-
-// State variables
 const {
     entityDialog: skillDialog,
     entity: skill,
@@ -55,8 +50,80 @@ onMounted(async () => {
 const showAddSkillDialog = () => {
     skillDialog.value = true;
     skill.value = {};
-    submitted.value = false;
 };
+
+function saveSkillFlow() {
+    submitted.value = true;
+    if (skill.value.skillName.trim()) {
+        skill.value.tags = relatedTags.value;
+        skill.value.associatedSkillTypeNames = selectedSkillTypes.value;
+        saveSkillTypes();
+        saveSkill();
+        resetForm();
+        skillDialog.value = false;
+    }
+}
+
+function saveSkillTypes() {
+    skill.value.associatedSkillTypeNames.forEach((typeName) => {
+        let skillType = skillTypesStore.items.find((t) => t.skillTypeName === typeName);
+        if (!skillType) {
+            skillType = {
+                id: skillTypesStore.createId(),
+                skillTypeName: typeName,
+                associatedSkillNames: [skill.value.skillName],
+                createDate: new Date(),
+                included: false,
+                tags: []
+            };
+            skillTypesStore.addItem(skillType);
+        } else if (!skillType.associatedSkillNames.includes(skill.value.skillName)) {
+            skillType.associatedSkillNames.push(skill.value.skillName);
+            skillTypesStore.updateItem(skillType);
+        }
+    });
+}
+
+function editSkillFlow(skillToEdit) {
+    skill.value = { ...skillToEdit };
+    // Load tags and skill types
+    relatedTags.value = skillToEdit.tags;
+    selectedSkillTypes.value = skillToEdit.associatedSkillTypeNames;
+    skillDialog.value = true;
+}
+
+function exitFlow() {
+    resetForm();
+    skillDialog.value = false;
+}
+
+function resetForm() {
+    skill.value = {
+        id: '',
+        createDate: new Date(),
+        included: false,
+        tags: [],
+        skillName: '',
+        associatedSkillTypeNames: []
+    };
+    relatedTags.value = [];
+    selectedSkillTypes.value = [];
+}
+
+function searchSkillTypes(event: { query: string }) {
+    const query = event.query.toLowerCase();
+    filteredSkillTypes.value = skillTypesStore.items.map((type) => type.skillTypeName).filter((typeName) => typeName && typeName.toLowerCase().includes(query));
+}
+
+function handleSkillTypeInput(event: KeyboardEvent) {
+    if (event.key === 'Enter' && (event.target as HTMLInputElement).value) {
+        const inputValue = (event.target as HTMLInputElement).value.trim();
+        if (inputValue && !selectedSkillTypes.value.includes(inputValue)) {
+            selectedSkillTypes.value.push(inputValue);
+        }
+        (event.target as HTMLInputElement).value = '';
+    }
+}
 </script>
 
 <template>
@@ -97,4 +164,40 @@ const showAddSkillDialog = () => {
             </Column>
         </DataTable>
     </div>
+    <Dialog header="Skill Details" :visible="skillDialog" :modal="true" :closable="false" :style="{ width: '500px' }" :breakpoints="{ '960px': '75vw', '640px': '100vw' }">
+        <div class="flex flex-col gap-4">
+            <!-- Skill Name -->
+            <div class="field">
+                <label for="skillName">Skill Name</label>
+                <InputText id="skillName" v-model="skill.skillName" required autofocus class="w-full" :class="{ 'p-invalid': submitted && !skill.skillName }" />
+                <small v-if="submitted && !skill.skillName" class="p-error">Skill Name is required.</small>
+            </div>
+
+            <!-- Skill Types -->
+            <div class="field">
+                <label for="skillTypes">Skill Types</label>
+                <AutoComplete
+                    id="skillTypes"
+                    v-model="selectedSkillTypes"
+                    :suggestions="filteredSkillTypes"
+                    placeholder="Select Skill Types"
+                    @complete="searchSkillTypes"
+                    multiple
+                    @keydown="handleSkillTypeInput"
+                    :force-selection="false"
+                    class="w-full"
+                />
+            </div>
+
+            <!-- Tags -->
+            <div class="field">
+                <label for="tags">Tags</label>
+                <AutoComplete id="tags" v-model="relatedTags" :suggestions="allTags" placeholder="Add tags" @complete="searchTags" multiple @keydown="handleTagInput" :force-selection="false" class="w-full" />
+            </div>
+        </div>
+        <template #footer>
+            <Button label="Cancel" icon="pi pi-times" class="p-button-text" @click="exitFlow" />
+            <Button label="Save" icon="pi pi-check" @click="saveSkillFlow" />
+        </template>
+    </Dialog>
 </template>
