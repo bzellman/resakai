@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import blobStream from 'blob-stream';
-import PDFDocument from 'pdfkit';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { computed, onMounted, ref } from 'vue';
-
+import * as html2pdf from '../../../node_modules/html2pdf.js/dist/html2pdf.bundle.js';
 import { useCertificationsStore, useEducationStore, useJobDescriptionsStore, useJobsStore, usePersonsStore, useProjectsStore, useSkillsStore, useSummaryStore, useVolunteerStore } from '../../stores/resumeDataStore';
 import { Certification, Education, Job, JobDescription, Person, ProfessionalSummary, Project, SkillName, Volunteer } from '../../types/interfaceTypes';
 
@@ -27,6 +27,9 @@ const certifications = ref<Certification[]>([]);
 const education = ref<Education[]>([]);
 const professionalSummary = ref<ProfessionalSummary | null>(null);
 const jobDescriptions = ref<JobDescription[]>([]);
+
+const _pdf = jsPDF;
+const _canvas = html2canvas;
 
 // Load data on mounted
 onMounted(async () => {
@@ -85,102 +88,57 @@ const getJobDescriptions = (jobId: string) => {
 
 // Update the PDF export function
 
+// interface PDFOptions {
+//     margin: number;
+//     filename: string;
+//     image: {
+//         type: string;
+//         quality: number;
+//     };
+//     html2canvas: {
+//         scale: number;
+//         useCORS: boolean;
+//         letterRendering: boolean;
+//     };
+//     jsPDF: {
+//         unit: string;
+//         format: string;
+//         orientation: string;
+//     };
+// }
 const exportToPDF = async (): Promise<void> => {
     try {
-        const doc = new PDFDocument({
-            margin: 50,
-            size: 'letter'
+        const element = document.querySelector('.resume-container');
+
+        if (!element) throw new Error('Resume container element not found');
+
+        const canvas = await html2canvas(element as HTMLElement, {
+            scale: 2,
+            useCORS: true
         });
+        const options = {
+            margin: 10,
+            filename: 'document.pdf',
+            image: {
+                type: 'jpeg',
+                quality: 0.98
+            },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait'
+            }
+        };
 
-        const stream = doc.pipe(blobStream());
-
-        // Header
-        if (person.value) {
-            doc.fontSize(24).text(person.value.name, { align: 'center' });
-            doc.moveDown();
-
-            const contactInfo = [person.value.email, person.value.phone, getFullLocation.value, person.value.github, person.value.linkedin].filter(Boolean).join(' | ');
-
-            doc.fontSize(10).text(contactInfo, { align: 'center' });
-            doc.moveDown();
-        }
-
-        // Professional Summary
-        if (professionalSummary.value) {
-            doc.fontSize(14).text('Professional Summary', { underline: true });
-            doc.fontSize(10).text(professionalSummary.value.summary);
-            doc.moveDown();
-        }
-
-        // Experience
-        if (jobs.value.length) {
-            doc.fontSize(14).text('Professional Experience', { underline: true });
-            doc.moveDown();
-
-            jobs.value.forEach((job) => {
-                doc.fontSize(12).text(job.jobTitle);
-                doc.fontSize(10).text(`${job.companyName} - ${job.location}`);
-
-                const descriptions = getJobDescriptions(job.id);
-                if (descriptions.length) {
-                    descriptions.forEach((desc) => {
-                        doc.fontSize(10).list([desc.description], { bulletRadius: 2 });
-                    });
-                }
-                doc.moveDown();
-            });
-        }
-
-        // Skills
-        if (Object.keys(groupedSkills.value).length) {
-            doc.fontSize(14).text('Technical Skills', { underline: true });
-            doc.moveDown();
-
-            Object.entries(groupedSkills.value).forEach(([type, skills]) => {
-                doc.fontSize(10).text(`${type}: ${skills.map((s) => s.skillName).join(', ')}`);
-            });
-            doc.moveDown();
-        }
-
-        // Projects
-        if (projects.value.length) {
-            doc.fontSize(14).text('Projects', { underline: true });
-            doc.moveDown();
-
-            projects.value.forEach((project) => {
-                doc.fontSize(12).text(project.projectName);
-                doc.fontSize(10).text(project.projectDetails);
-                doc.moveDown();
-            });
-        }
-
-        // Education
-        if (education.value.length) {
-            doc.fontSize(14).text('Education', { underline: true });
-            doc.moveDown();
-
-            education.value.forEach((edu) => {
-                doc.fontSize(12).text(edu.degreeName);
-                doc.fontSize(10).text(`${edu.schoolName} - ${edu.location}`);
-                doc.moveDown();
-            });
-        }
-
-        // Finalize PDF
-        doc.end();
-
-        // Create download link
-        stream.on('finish', () => {
-            const blob = stream.toBlob('application/pdf');
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'resume.pdf';
-            link.click();
-            window.URL.revokeObjectURL(url);
-        });
+        html2pdf(element).set(options).save();
     } catch (error) {
         console.error('PDF generation failed:', error);
+        throw error; // Re-throw to handle in UI if needed
     }
 };
 </script>
@@ -188,9 +146,8 @@ const exportToPDF = async (): Promise<void> => {
 <template>
     <div>
         <!-- Add Export Button -->
-        <div class="export-container">
-            <Button label="Export PDF" icon="pi pi-file-pdf" @click="exportToPDF" />
-        </div>
+        <div class="export-container"></div>
+        <button @click="exportToPDF">Generate PDF</button>
 
         <div class="resume-container">
             <!-- Person Details -->
