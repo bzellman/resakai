@@ -17,7 +17,22 @@ const entityStore = useSummaryStore();
 const toast = useToast();
 
 // Use the useEntity composable
-const { entityDialog: summaryDialog, entity: summary, submitted, includedEntities, filters, allTags, relatedTags, searchTags, handleTagInput, getTagNameById, saveEntity, editEntity, deleteEntity, toggleIncludeEntity } = useEntity(entityStore);
+const {
+    entityDialog: summaryDialog,
+    entity: summary,
+    submitted,
+    includedEntities,
+    filters: filterFromEntity,
+    allTags,
+    relatedTags,
+    searchTags,
+    handleTagInput,
+    getTagNameById,
+    saveEntity,
+    editEntity,
+    deleteEntity,
+    toggleIncludeEntity
+} = useEntity(entityStore);
 
 const props = defineProps({
     filters: {
@@ -73,31 +88,19 @@ onMounted(async () => {
                 <p>No professional summaries available. Please add a new summary.</p>
             </div>
             <div v-else>
-                <DataTable :value="entityStore.items" dataKey="id" :paginator="true" :rows="10">
-                    <!-- **Table Header** -->
-                    <template #header>
-                        <div class="flex flex-wrap gap-2 items-center justify-between">
-                            <h4 class="m-0">Professional Summaries</h4>
-                            <span class="p-input-icon-left">
-                                <i class="pi pi-search" />
-                                <InputText v-model="filters.global.value" placeholder="Search..." />
-                            </span>
-                        </div>
-                    </template>
-                    <!-- **Summary Column** -->
+                <DataTable :value="entityStore.items" :filters="filters" dataKey="id" :paginator="true" :rows="10">
+                    <Column filterField="included" header="Included" style="min-width: 1rem">
+                        <template #body="slotProps">
+                            <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
+                        </template>
+                    </Column>
                     <Column field="summary" header="Summary" sortable style="min-width: 12rem"></Column>
                     <!-- **Tags Column** -->
-                    <Column field="tags" header="Tags" style="min-width: 16rem">
+                    <Column filterField="tags" header="Tags" style="min-width: 16rem">
                         <template #body="slotProps">
                             <div class="flex flex-wrap gap-1">
                                 <Tag v-for="tagId in slotProps.data.tags" :key="tagId" :value="getTagNameById(tagId)" :rounded="true" />
                             </div>
-                        </template>
-                    </Column>
-                    <!-- **Included Column** -->
-                    <Column field="included" header="Included" sortable style="min-width: 12rem">
-                        <template #body="slotProps">
-                            <Checkbox :value="slotProps.data.id" v-model="includedEntities" @change="toggleIncludeEntity(slotProps.data.id)" />
                         </template>
                     </Column>
                     <!-- **Actions Column** -->
