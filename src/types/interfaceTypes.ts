@@ -1,3 +1,4 @@
+//InterfaceType.ts
 export interface EntityBase {
     id: string;
 }

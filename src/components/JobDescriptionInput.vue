@@ -9,6 +9,7 @@ import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
+import { DataTableFilterMeta } from 'primevue/datatable';
 import { computed } from 'vue';
 import { useJobDescriptionsStore } from '../stores/resumeDataStore';
 import { Job } from '../types/interfaceTypes';
@@ -16,11 +17,16 @@ import { useEntity } from '../views/composables/useEntity';
 
 const props = defineProps<{
     parentJob: Job;
-    filters: {
-        type: Object;
-        required: true;
-    };
+    filters: DataTableFilterMeta;
 }>();
+
+// const props = defineProps({
+//     parentJob: Job;
+//     filters: {
+//         type: Object,
+//         required: true
+//     };
+// });
 
 const entityStore = useJobDescriptionsStore();
 const filteredItems = computed(() => {
