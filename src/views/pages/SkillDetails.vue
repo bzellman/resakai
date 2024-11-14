@@ -6,7 +6,7 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Tag from 'primevue/tag';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useSkillsStore, useSkillTypesStore, useTagsStore } from '../../stores/resumeDataStore';
 import { useEntity } from '../composables/useEntity';
 
@@ -46,10 +46,6 @@ const {
     filteredEntities: filteredSkills
 } = useEntity(skillStore);
 
-// For skill types (allowing multiple selection)
-const filteredSkillTypes = ref<string[]>([]);
-const selectedSkillTypes = ref<string[]>([]);
-
 onMounted(async () => {
     await Promise.all([skillStore.loadItems(), tagsStore.loadItems(), skillTypesStore.loadItems()]);
     // Initialize included skills
@@ -87,7 +83,7 @@ const showAddSkillDialog = () => {
                     </div>
                 </template>
             </Column>
-            <Column field="included" header="Included">
+            <Column filterField="included" header="Included">
                 <template #body="slotProps">
                     <Checkbox :value="slotProps.data.id" v-model="includedSkills" @change="() => toggleIncludeSkill(slotProps.data.id)" />
                 </template>

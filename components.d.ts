@@ -27,8 +27,11 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Tab: typeof import('primevue/tab')['default']
     Tag: typeof import('primevue/tag')['default']
     Toast: typeof import('primevue/toast')['default']
+    ToggleButton: typeof import('primevue/togglebutton')['default']
+    ToggleSwitch: typeof import('primevue/toggleswitch')['default']
   }
   export interface ComponentCustomProperties {
     StyleClass: typeof import('primevue/styleclass')['default']
