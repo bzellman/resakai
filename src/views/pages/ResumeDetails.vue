@@ -5,6 +5,7 @@ import Menubar from 'primevue/menubar';
 import MultiSelect from 'primevue/multiselect';
 import TabPanel from 'primevue/tabpanel';
 import { computed, onMounted, ref } from 'vue';
+import UploadDialog from '../../components/UploadDialog.vue';
 import { useTagsStore } from '../../stores/resumeDataStore';
 import CertificationDetails from './CertificationsDetails.vue';
 import EducationDetails from './EducationDetails.vue';
@@ -19,6 +20,8 @@ const filters = ref({
     tags: { value: null, matchMode: FilterMatchMode.CONTAINS },
     included: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
+
+const showUploadDialog = ref(false);
 
 const tagsStore = useTagsStore();
 
@@ -42,12 +45,15 @@ onMounted(async () => {
                     <MultiSelect v-model="filters.tags.value" :options="allTags" optionLabel="label" optionValue="value" placeholder="Select Tags"></MultiSelect>
                     <!-- TODO: Refactor to use some kind of get/set to resolve error but use null in filter and falue in ToggleSwitch -->
                     <ToggleSwitch v-model="filters.included.value" :true-value="true" :false-value="null" />
+                    <Button label="Upload Resume" icon="pi pi-upload" @click="showUploadDialog = true" class="mb-3" />
                 </div>
             </template>
         </Menubar>
     </div>
 
     <div class="card">
+        <UploadDialog v-model:visible="showUploadDialog" @upload-complete="showUploadDialog = false" />
+
         <Tabs value="0">
             <TabList>
                 <Tab value="0">My Info</Tab>

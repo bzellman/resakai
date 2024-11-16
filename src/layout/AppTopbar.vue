@@ -34,6 +34,10 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
             </router-link>
         </div>
 
+        <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle">
+            <i class="pi pi-bars"></i>
+        </button>
+
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
@@ -56,6 +60,7 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
             >
                 <i class="pi pi-ellipsis-v"></i>
+                <span>Menu</span>
             </button>
 
             <div class="layout-topbar-menu hidden lg:block">

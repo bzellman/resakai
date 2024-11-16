@@ -19,6 +19,7 @@ declare module 'vue' {
     DataTable: typeof import('primevue/datatable')['default']
     DatePicker: typeof import('primevue/datepicker')['default']
     Dialog: typeof import('primevue/dialog')['default']
+    FileUpload: typeof import('primevue/fileupload')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
     Fluid: typeof import('primevue/fluid')['default']
     InputSwitch: typeof import('primevue/inputswitch')['default']
@@ -36,6 +37,7 @@ declare module 'vue' {
     Toast: typeof import('primevue/toast')['default']
     ToggleButton: typeof import('primevue/togglebutton')['default']
     ToggleSwitch: typeof import('primevue/toggleswitch')['default']
+    UploadDialog: typeof import('./src/components/UploadDialog.vue')['default']
   }
   export interface ComponentCustomProperties {
     StyleClass: typeof import('primevue/styleclass')['default']
