@@ -61,6 +61,20 @@ onMounted(async () => {
                                             <label for="companyName">Company Name</label>
                                             <InputText id="companyName" v-model="job.companyName" placeholder="Enter company name" class="w-full" />
                                         </div>
+                                        <div class="field flex gap-4">
+                                            <div class="flex-1">
+                                                <label for="startDate">Start Date</label>
+                                                <Calendar id="startDate" v-model="job.startDate" placeholder="Select start date" class="w-full" />
+                                            </div>
+                                            <div class="flex-1">
+                                                <label for="endDate">End Date</label>
+                                                <Calendar id="endDate" v-model="job.endDate" placeholder="Select end date" class="w-full" />
+                                            </div>
+                                            <div class="flex-1">
+                                                <label for="endDate">Location</label>
+                                                <InputText id="endDate" v-model="job.location" placeholder="Location" class="w-full" />
+                                            </div>
+                                        </div>
                                         <div class="field">
                                             <label for="tags">Tags</label>
                                             <AutoComplete id="tags" v-model="relatedTags" :suggestions="allTags" placeholder="Add tags" @complete="searchTags" multiple :force-selection="false" @keydown="handleTagInput" class="w-full" />

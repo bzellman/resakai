@@ -168,29 +168,29 @@ const exportToPDF = async (): Promise<void> => {
             <!-- Person Details -->
             <header v-if="person" class="header-section">
                 <h1 class="name-heading">{{ person.name }}</h1>
-                <div class="contact-grid">
+                <div class="contact-row">
+                    <div v-if="getFullLocation" class="contact-item">
+                        <!-- <span class="contact-label">Location:</span> -->
+                        <span>{{ getFullLocation }}</span>
+                    </div>
                     <div v-if="person.email" class="contact-item">
-                        <span class="contact-label">Email:</span>
+                        <!-- <span class="contact-label">Email:</span> -->
                         <a :href="`mailto:${person.email}`" class="contact-link">{{ person.email }}</a>
                     </div>
                     <div v-if="person.phone" class="contact-item">
-                        <span class="contact-label">Phone:</span>
+                        <!-- <span class="contact-label">Phone:</span> -->
                         <span>{{ person.phone }}</span>
                     </div>
-                    <div v-if="getFullLocation" class="contact-item">
-                        <span class="contact-label">Location:</span>
-                        <span>{{ getFullLocation }}</span>
-                    </div>
-                    <div v-if="person.github" class="contact-item">
-                        <span class="contact-label">GitHub:</span>
-                        <a :href="person.github" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.github }}</a>
-                    </div>
                     <div v-if="person.linkedin" class="contact-item">
-                        <span class="contact-label">LinkedIn:</span>
+                        <!-- <span class="contact-label">LinkedIn:</span> -->
                         <a :href="person.linkedin" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.linkedin }}</a>
                     </div>
+                    <div v-if="person.github" class="contact-item">
+                        <!-- <span class="contact-label">GitHub:</span> -->
+                        <a :href="person.github" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.github }}</a>
+                    </div>
                     <div v-if="person.portfolio" class="contact-item">
-                        <span class="contact-label">Portfolio:</span>
+                        <!-- <span class="contact-label">Portfolio:</span> -->
                         <a :href="person.portfolio" target="_blank" rel="noopener noreferrer" class="contact-link">{{ person.portfolio }}</a>
                     </div>
                 </div>
@@ -479,5 +479,33 @@ const exportToPDF = async (): Promise<void> => {
     break-before: avoid;
     page-break-before: avoid;
 }
+
 /* Prevent page breaks inside elements */
+.contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start; /* Left-align items */
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-right: 8px; /* 8px space between items */
+    position: relative;
+}
+
+.contact-item::after {
+    content: ' |'; /* Add a space before the separator */
+    margin-left: 8px;
+}
+
+.contact-item:last-child::after {
+    content: ''; /* Remove the separator from the last item */
+    margin: 0;
+}
+
+.contact-item i {
+    margin-right: 5px; /* Space between icon and text */
+}
 </style>
