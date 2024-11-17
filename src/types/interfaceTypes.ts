@@ -1,4 +1,3 @@
-//InterfaceType.ts
 export interface EntityBase {
     id: string;
 }
@@ -30,7 +29,6 @@ export interface Job extends BaseEntity {
     startDate?: Date;
     endDate?: Date;
     location: string;
-    descriptions: { description: string; tags: TagEntity[]; id: string; checked: boolean }[];
 }
 
 export interface JobDescription extends BaseEntity {

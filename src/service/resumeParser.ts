@@ -8,10 +8,13 @@ interface ParsedResumeData {
 }
 
 export async function processResumeFiles(files: File[]): Promise<void> {
+    console.log('here');
     for (const file of files) {
+        console.log('here2');
         const pdfData = await readPdfFile(file);
-        const parsedData = await sendToClaudAPI(pdfData);
-        await updateStores(parsedData);
+        console.log('pdfData', pdfData);
+        // const parsedData = await sendToClaudAPI(pdfData);
+        // await updateStores(parsedData);
     }
 }
 
