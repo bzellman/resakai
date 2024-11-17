@@ -1,20 +1,25 @@
-import { useJobDescriptionsStore, useJobsStore, usePersonsStore, useSkillTypesStore, useSkillsStore } from '../stores/resumeDataStore';
+import { CLAUDE_API_KEY, CLAUDE_API_URL } from '../config/config';
+import { useJobDescriptionsStore, useJobsStore, usePersonsStore, useSkillsStore } from '../stores/resumeDataStore';
+import { Job, Person, SkillName } from '../types/interfaceTypes';
 
 interface ParsedResumeData {
-    person: any;
-    jobs: any[];
-    skills: any[];
-    // Add other relevant data structures
+    person: Partial<Person>;
+    jobs: Array<{
+        job: Partial<Job>;
+        descriptions: string[];
+    }>;
+    skills: Partial<SkillName>[];
 }
 
 export async function processResumeFiles(files: File[]): Promise<void> {
-    console.log('here');
     for (const file of files) {
-        console.log('here2');
-        const pdfData = await readPdfFile(file);
-        console.log('pdfData', pdfData);
-        // const parsedData = await sendToClaudAPI(pdfData);
-        // await updateStores(parsedData);
+        try {
+            const pdfData = await readPdfFile(file);
+            const parsedData = await sendToClaudAPI(pdfData);
+            await updateStores(parsedData);
+        } catch (error) {
+            console.error(`Failed to process file ${file.name}:`, error);
+        }
     }
 }
 
@@ -28,40 +33,109 @@ async function readPdfFile(file: File): Promise<ArrayBuffer> {
 }
 
 async function sendToClaudAPI(pdfData: ArrayBuffer): Promise<ParsedResumeData> {
-    // TODO: Implement Claude API integration
-    // This should send the PDF data to Claude and receive structured JSON data
-    throw new Error('Claude API integration not implemented');
+    const base64Pdf = Buffer.from(pdfData).toString('base64');
+
+    const prompt = `Please analyze this resume and extract the following information in JSON format:
+    - Personal information (name, email, phone, location, social links)
+    - Work experience (company names, job titles, dates, locations)
+    - Job descriptions for each role
+    - Skills
+    
+    Format the response as a JSON object matching this structure:
+    {
+        "person": { /* personal details */ },
+        "jobs": [{ 
+            "job": { /* job details */ },
+            "descriptions": [ /* array of bullet points */ ]
+        }],
+        "skills": [{ "skillName": "", "associatedSkillTypeNames": [] }]
+    }`;
+
+    const response = await fetch(CLAUDE_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': CLAUDE_API_KEY,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: 'claude-3-sonnet-20240229',
+            max_tokens: 4096,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: prompt
+                        },
+                        {
+                            type: 'image',
+                            source: {
+                                type: 'base64',
+                                media_type: 'application/pdf',
+                                data: base64Pdf
+                            }
+                        }
+                    ]
+                }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Claude API error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    const parsedContent = JSON.parse(result.content[0].text);
+    return parsedContent as ParsedResumeData;
 }
 
 async function updateStores(data: ParsedResumeData): Promise<void> {
     const personsStore = usePersonsStore();
     const jobsStore = useJobsStore();
     const jobDescriptionsStore = useJobDescriptionsStore();
-    const skillTypesStore = useSkillTypesStore();
     const skillsStore = useSkillsStore();
 
-    // Update person if doesn't exist
-    if (!personsStore.users.find((p) => p.email === data.person.email)) {
-        personsStore.saveUser(data.person);
+    // Add base properties
+    const baseProps = {
+        createDate: new Date(),
+        tags: [],
+        included: true
+    };
+
+    // Update person
+    const person = { ...baseProps, ...data.person };
+    if (!personsStore.users.find((p) => p.email === person.email)) {
+        await personsStore.saveUser(person);
     }
 
-    // Process jobs and job descriptions
-    for (const job of data.jobs) {
+    // Process jobs and descriptions
+    for (const jobData of data.jobs) {
+        const job = { ...baseProps, ...jobData.job };
         const existingJob = findMatchingJob(job, jobsStore.items);
+
         if (!existingJob) {
             const newJob = await jobsStore.addItem(job);
             // Add job descriptions
-            job.descriptions.forEach((desc: any) => {
-                jobDescriptionsStore.addItem({
-                    ...desc,
+            for (const desc of jobData.descriptions) {
+                await jobDescriptionsStore.addItem({
+                    ...baseProps,
+                    description: desc,
                     jobId: newJob.id
                 });
-            });
+            }
         }
     }
 
-    // Process skills and skill types
-    // ... implement skill processing logic
+    // Process skills
+    for (const skill of data.skills) {
+        const existingSkill = skillsStore.items.find((s) => s.skillName === skill.skillName);
+        if (!existingSkill) {
+            await skillsStore.addItem({ ...baseProps, ...skill });
+        }
+    }
 }
 
 function findMatchingJob(newJob: any, existingJobs: any[]): any {
