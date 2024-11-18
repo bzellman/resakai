@@ -134,7 +134,6 @@ export const usePersonsStore = defineStore('persons', {
 });
 
 // Existing stores
-export const useJobsStore = createStore<Job>('jobs');
 export const useJobDescriptionsStore = createStore<JobDescription>('jobDescriptions');
 // export const usePersonsStore = createStore<Person>('persons');
 export const useSummaryStore = createStore<ProfessionalSummary>('professionalSummaries');
@@ -145,3 +144,43 @@ export const useProjectsStore = createStore<Project>('projects');
 export const useCertificationsStore = createStore<Certification>('certifications');
 export const useTagsStore = createStore<TagEntity>('tags');
 export const useEducationStore = createStore<Education>('education');
+
+// Create a specialized store for Jobs that handles JobDescription cascading deletes
+export const useJobsStore = defineStore('jobs', {
+    state: () => ({
+        items: [] as Job[],
+        loading: false
+    }),
+    actions: {
+        async loadItems() {
+            const store = createStore<Job>('jobs')();
+            await store.loadItems.call(this);
+        },
+        addItem(item: Job) {
+            const store = createStore<Job>('jobs')();
+            store.addItem.call(this, item);
+        },
+        updateItem(updatedItem: Job) {
+            const store = createStore<Job>('jobs')();
+            store.updateItem.call(this, updatedItem);
+        },
+        deleteItem(itemId: string) {
+            // Delete the job
+            this.items = this.items.filter((item) => item.id !== itemId);
+            this.saveToStorage();
+
+            // Delete associated job descriptions
+            const jobDescStore = useJobDescriptionsStore();
+            jobDescStore.items = jobDescStore.items.filter((desc) => desc.jobId !== itemId);
+            jobDescStore.saveToStorage();
+        },
+        saveToStorage() {
+            const store = createStore<Job>('jobs')();
+            store.saveToStorage.call(this);
+        },
+        createId(): string {
+            const store = createStore<Job>('jobs')();
+            return store.createId.call(this);
+        }
+    }
+});
